@@ -202,12 +202,30 @@ int main(int argc, char **argv)
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
+
+void *gaussian_elimination(void *outer_pack){
+  int row, col;
+  float multiplier;
+
+  struct arg_struct *arg = outer_pack;
+  for (row = (arg->norm + 1) + (arg->tid * arg->step); row < ((arg->tid + 1) * arg->step); row++)
+    {
+      multiplier = A[row][arg->norm] / A[arg->norm][arg->norm];
+      for (col = arg->norm; col < N; col++)
+      {
+        A[row][col] -= A[arg->norm][col] * multiplier;
+      }
+      B[row] -= B[arg->norm] * multiplier;
+    }
+    return NULL;
+}
+
 void gauss()
 {
   int norm, row, col, under_norm, nthread, num_of_threads;
   num_of_threads = 4;
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
-  pthread threads[num_of_threads];
+  pthread_t threads[num_of_threads];
 
   printf("Computing Serially.\n");
   /* Gaussian elimination */
@@ -217,15 +235,15 @@ void gauss()
       for (nthread=0; nthread<num_of_threads; ++nthread){
         arg[nthread].tid = nthread;  
         arg[nthread].norm = norm;
-        arg[nthread].step = ((int) ((float) under_norm / (float) N))) + 1; 
-        pthread_create(&threads[nthread], NULL, Gaussian_elimination, (void*) &arg[nthread]);
+        arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
+        pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
       }
     }else{
       for (nthread=0; nthread<num_of_threads; ++nthread){
         arg[nthread].tid = nthread;  
         arg[nthread].norm = norm;
-        arg[nthread].step = ((int) ((float) under_norm / (float) N))) + 1; 
-        pthread_create(&threads[nthread], NULL, Gaussian_elimination, (void*) &arg[nthread]);
+        arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
+        pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
       }
     }
   }
@@ -245,16 +263,3 @@ void gauss()
   }
 }
 
-void *Gaussian_elimination(*void){
-  int row, col;
-  float multiplier;
-  // for (row = norm + 1; row < N; row++)
-  //   {
-  //     multiplier = A[row][norm] / A[norm][norm];
-  //     for (col = norm; col < N; col++)
-  //     {
-  //       A[row][col] -= A[norm][col] * multiplier;
-  //     }
-  //     B[row] -= B[norm] * multiplier;
-  //   }
-}
