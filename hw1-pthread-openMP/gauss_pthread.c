@@ -31,7 +31,7 @@ struct arg_struct{
   int tid;
   int norm;
   int step;
-}
+};
 /* Prototype */
 void gauss(); /* The function you will provide.
 		* It is this routine that is timed.
@@ -227,7 +227,7 @@ void gauss()
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
   pthread_t threads[num_of_threads];
 
-  printf("Computing Serially.\n");
+  printf("Computing Parallelly.\n");
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++){
     under_norm = N - (norm + 1);
@@ -241,7 +241,6 @@ void gauss()
     }else{
       for (nthread=0; nthread<num_of_threads; ++nthread){
         arg[nthread].tid = nthread;  
-        arg[nthread].norm = norm;
         arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
         pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
       }
