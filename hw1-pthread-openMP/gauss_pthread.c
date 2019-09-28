@@ -215,10 +215,18 @@ void gauss()
     under_norm = N - (norm + 1);
     if (under_norm <= num_of_threads){
       for (nthread=0; nthread<num_of_threads; ++nthread){
-        create
+        arg[nthread].tid = nthread;  
+        arg[nthread].norm = norm;
+        arg[nthread].step = ((int) ((float) under_norm / (float) N))) + 1; 
+        pthread_create(&threads[nthread], NULL, Gaussian_elimination, (void*) &arg[nthread]);
       }
     }else{
-
+      for (nthread=0; nthread<num_of_threads; ++nthread){
+        arg[nthread].tid = nthread;  
+        arg[nthread].norm = norm;
+        arg[nthread].step = ((int) ((float) under_norm / (float) N))) + 1; 
+        pthread_create(&threads[nthread], NULL, Gaussian_elimination, (void*) &arg[nthread]);
+      }
     }
   }
   /* (Diagonal elements are not normalized to 1.  This is treated in back
