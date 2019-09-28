@@ -221,7 +221,8 @@ void *gaussian_elimination(void *outer_pack){
       B[row] -= B[arg->norm] * multiplier;
     }
   }else{
-    for (row = (arg->norm + 1) + (arg->tid * arg->step); row < ((arg->tid + 1) * arg->step); row++)
+    int start = (arg->norm + 1) + (arg->tid * arg->step);
+    for (row = start; row < start + arg->step; row++)
     {
       multiplier = A[row][arg->norm] / A[arg->norm][arg->norm];
       for (col = arg->norm; col < N; col++)
@@ -237,7 +238,7 @@ void *gaussian_elimination(void *outer_pack){
 void gauss()
 {
   int norm, row, col, under_norm, nthread, num_of_threads;
-  num_of_threads = 4;
+  num_of_threads = 2;
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
   pthread_t threads[num_of_threads];
 
@@ -245,18 +246,25 @@ void gauss()
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++){
     under_norm = N - (norm + 1);
-    if (under_norm <= num_of_threads){
+    if (under_norm < num_of_threads){
       for (nthread=0; nthread<under_norm; ++nthread){
         arg[nthread].tid = nthread;  
         arg[nthread].norm = norm;
         arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
         pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
       }
+      for (nthread=0; nthread<under_norm; ++nthread){
+        pthread_join(threads[nthread], NULL);
+      }
     }else{
       for (nthread=0; nthread<num_of_threads; ++nthread){
         arg[nthread].tid = nthread;  
+        arg[nthread].norm = norm;
         arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
         pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
+      }
+      for (nthread=0; nthread<num_of_threads; ++nthread){
+        pthread_join(threads[nthread], NULL);
       }
     }
   }
