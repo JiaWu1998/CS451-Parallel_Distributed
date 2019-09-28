@@ -14,6 +14,7 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
+#include <pthread.h>
 
 /* Program Parameters */
 #define MAXN 2000 /* Max value of N */
@@ -26,6 +27,11 @@ volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
 /* junk */
 #define randm() 4 | 2 [uid] & 3
 
+struct arg_struct{
+  int tid;
+  int norm;
+  int step;
+}
 /* Prototype */
 void gauss(); /* The function you will provide.
 		* It is this routine that is timed.
@@ -198,23 +204,21 @@ int main(int argc, char **argv)
  */
 void gauss()
 {
-  int norm, row, col; /* Normalization row, and zeroing
-			* element row and col */
-  float multiplier;
+  int norm, row, col, under_norm, nthread, num_of_threads;
+  num_of_threads = 4;
+  struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
+  pthread threads[num_of_threads];
 
   printf("Computing Serially.\n");
-
   /* Gaussian elimination */
-  for (norm = 0; norm < N - 1; norm++)
-  {
-    for (row = norm + 1; row < N; row++)
-    {
-      multiplier = A[row][norm] / A[norm][norm];
-      for (col = norm; col < N; col++)
-      {
-        A[row][col] -= A[norm][col] * multiplier;
+  for (norm = 0; norm < N - 1; norm++){
+    under_norm = N - (norm + 1);
+    if (under_norm <= num_of_threads){
+      for (nthread=0; nthread<num_of_threads; ++nthread){
+        create
       }
-      B[row] -= B[norm] * multiplier;
+    }else{
+
     }
   }
   /* (Diagonal elements are not normalized to 1.  This is treated in back
@@ -231,4 +235,18 @@ void gauss()
     }
     X[row] /= A[row][row];
   }
+}
+
+void *Gaussian_elimination(*void){
+  int row, col;
+  float multiplier;
+  // for (row = norm + 1; row < N; row++)
+  //   {
+  //     multiplier = A[row][norm] / A[norm][norm];
+  //     for (col = norm; col < N; col++)
+  //     {
+  //       A[row][col] -= A[norm][col] * multiplier;
+  //     }
+  //     B[row] -= B[norm] * multiplier;
+  //   }
 }
