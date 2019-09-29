@@ -211,7 +211,7 @@ void *gaussian_elimination(void *outer_pack){
   struct arg_struct *arg = outer_pack;
   int start = (arg->norm + 1) + (arg->tid * arg->step);
   
-  if (start + arg->step -1> N){
+  if (start + arg->step > N){
     for (row = start; row < N; row++)
     {
       multiplier = A[row][arg->norm] / A[arg->norm][arg->norm];
@@ -244,13 +244,11 @@ void gauss()
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
   pthread_t threads[num_of_threads];
 
-  int test;
   printf("Computing Parallelly.\n");
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++){
     under_norm = N - (norm + 1);
     step = ceil((float) under_norm / (float) num_of_threads);
-    test = (int) step;
     if (under_norm < num_of_threads){
       for (nthread=0; nthread<under_norm; ++nthread){
         arg[nthread].tid = nthread;  
