@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 /* Program Parameters */
 #define MAXN 2000 /* Max value of N */
@@ -210,7 +211,7 @@ void *gaussian_elimination(void *outer_pack){
   struct arg_struct *arg = outer_pack;
   int start = (arg->norm + 1) + (arg->tid * arg->step);
   
-  if (start + arg->step > N){
+  if (start + arg->step -1> N){
     for (row = start; row < N; row++)
     {
       multiplier = A[row][arg->norm] / A[arg->norm][arg->norm];
@@ -238,19 +239,23 @@ void *gaussian_elimination(void *outer_pack){
 void gauss()
 {
   int norm, row, col, under_norm, nthread, num_of_threads;
+  float step;
   num_of_threads = 4;
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
   pthread_t threads[num_of_threads];
 
+  int test;
   printf("Computing Parallelly.\n");
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++){
     under_norm = N - (norm + 1);
+    step = ceil((float) under_norm / (float) num_of_threads);
+    test = (int) step;
     if (under_norm < num_of_threads){
       for (nthread=0; nthread<under_norm; ++nthread){
         arg[nthread].tid = nthread;  
         arg[nthread].norm = norm;
-        arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
+        arg[nthread].step = (int) step; 
         pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
       }
       for (nthread=0; nthread<under_norm; ++nthread){
@@ -260,7 +265,7 @@ void gauss()
       for (nthread=0; nthread<num_of_threads; ++nthread){
         arg[nthread].tid = nthread;  
         arg[nthread].norm = norm;
-        arg[nthread].step = ((int) ((float) under_norm / (float) N)) + 1; 
+        arg[nthread].step = (int) step; 
         pthread_create(&threads[nthread], NULL, gaussian_elimination, (void*) &arg[nthread]);
       }
       for (nthread=0; nthread<num_of_threads; ++nthread){
