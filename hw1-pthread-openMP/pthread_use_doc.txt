@@ -1,0 +1,2 @@
+Complile with 
+gcc -o gauss_pthread gauss_pthread.c -lpthread -lm 
