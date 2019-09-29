@@ -208,10 +208,10 @@ void *gaussian_elimination(void *outer_pack){
   float multiplier;
 
   struct arg_struct *arg = outer_pack;
-  int went_over = ((arg->tid + 1) * arg->step);
+  int start = (arg->norm + 1) + (arg->tid * arg->step);
   
-  if (went_over > N){
-    for (row = (arg->norm + 1) + (arg->tid * arg->step); row < N; row++)
+  if (start + arg->step > N){
+    for (row = start; row < N; row++)
     {
       multiplier = A[row][arg->norm] / A[arg->norm][arg->norm];
       for (col = arg->norm; col < N; col++)
@@ -221,7 +221,6 @@ void *gaussian_elimination(void *outer_pack){
       B[row] -= B[arg->norm] * multiplier;
     }
   }else{
-    int start = (arg->norm + 1) + (arg->tid * arg->step);
     for (row = start; row < start + arg->step; row++)
     {
       multiplier = A[row][arg->norm] / A[arg->norm][arg->norm];
@@ -232,13 +231,14 @@ void *gaussian_elimination(void *outer_pack){
       B[row] -= B[arg->norm] * multiplier;
     }
   }
+  pthread_exit(NULL);
     return NULL;
 }
 
 void gauss()
 {
   int norm, row, col, under_norm, nthread, num_of_threads;
-  num_of_threads = 2;
+  num_of_threads = 4;
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
   pthread_t threads[num_of_threads];
 
