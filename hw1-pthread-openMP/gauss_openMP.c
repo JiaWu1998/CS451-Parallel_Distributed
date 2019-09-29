@@ -14,6 +14,7 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
+#include <omp.h>
 
 /* Program Parameters */
 #define MAXN 2000 /* Max value of N */
@@ -202,11 +203,13 @@ void gauss()
 			* element row and col */
   float multiplier;
 
-  printf("Computing Serially.\n");
+  printf("Computing Parallelly.\n");
 
   /* Gaussian elimination */
+  #pragma omp parallel shared(N,A,B) num_threads(4)
   for (norm = 0; norm < N - 1; norm++)
   {
+    #pragma omp for private(multiplier, norm)
     for (row = norm + 1; row < N; row++)
     {
       multiplier = A[row][norm] / A[norm][norm];
