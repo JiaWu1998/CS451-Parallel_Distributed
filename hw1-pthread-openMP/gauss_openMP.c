@@ -197,6 +197,7 @@ int main(int argc, char **argv)
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
+
 void gauss()
 {
   int norm, row, col; /* Normalization row, and zeroing
@@ -206,10 +207,10 @@ void gauss()
   printf("Computing Parallelly.\n");
 
   /* Gaussian elimination */
-  #pragma omp parallel shared(N,A,B) num_threads(4)
   for (norm = 0; norm < N - 1; norm++)
   {
-    #pragma omp for private(multiplier, norm)
+    #pragma omp parallel shared(A,B) private(multiplier,row,col) firstprivate(norm) num_threads(5)
+    #pragma omp for schedule(static)
     for (row = norm + 1; row < N; row++)
     {
       multiplier = A[row][norm] / A[norm][norm];
@@ -219,6 +220,7 @@ void gauss()
       }
       B[row] -= B[norm] * multiplier;
     }
+
   }
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
