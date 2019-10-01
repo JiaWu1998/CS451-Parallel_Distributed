@@ -1,2 +1,19 @@
-Complile with 
+-Compile with: 
 gcc -o gauss_pthread gauss_pthread.c -lpthread -lm 
+
+-Test with:
+./gauss_pthread <matrix-dimensions> <random-seed>
+
+-My Performance Test:
+./gauss_pthread 2000 <random seed>
+
+-Optimization:
+version 1: I tried to parallelize everything within 
+the norm for loop.(Performance: ~1700-1800ms)
+
+version 2: I tried to parallelize the norm loop and also 
+the col loop. However, the performance went down. 
+(Performance: ~2400ms)
+
+version 3: I went back to version 1. I just played with the
+number of threads.

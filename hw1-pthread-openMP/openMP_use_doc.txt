@@ -1,0 +1,28 @@
+-Compile with: 
+gcc -o gauss_omp gauss_openMP.c -fopenmp
+
+-Test with: 
+./gauss_omp <matrix-dimensions> <random-seed>
+
+-My Performance Test:
+./gauss_omp 2000 <random seed>
+
+-Optimization:
+version 1: I tried to parallelize everything within the
+norm for loop.
+
+version 2: I tried to parallelize the norm loop and also 
+the col loop. However, the performance went down. 
+(Performance: ~2400ms)
+
+version 3: I went back to version 1. I just played with the
+number of threads. 
+# of threads=15 (Performance: ~660ms)
+# of threads=30 (Performance: ~620ms)
+# of threads=40 (Performance: ~480ms)
+# of threads=50 (Performance: ~740ms)
+# of threads=60 (Performance: ~730ms)
+
+Zone in
+# of threads=35 (Performance: ~480ms)
+# of threads=45 (Performance: ~480ms)

@@ -198,6 +198,21 @@ int main(int argc, char **argv)
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
 
+// This is part of version 2
+// void parallelize(int* r, int* n, float* m){
+//   int col;
+//   int row = *r;
+//   int norm = *n;
+//   float multiplier = *m;
+//   #pragma omp parallel shared(A,B) private(col) firstprivate(multiplier,norm,row) num_threads(500)
+//   #pragma omp for schedule(static)
+//   for (col = norm; col < N; col++)
+//       {
+//         A[row][col] -= A[norm][col] * multiplier;
+//       }
+//       B[row] -= B[norm] * multiplier;
+// }
+
 void gauss()
 {
   int norm, row, col; /* Normalization row, and zeroing
@@ -209,18 +224,18 @@ void gauss()
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++)
   {
-    #pragma omp parallel shared(A,B) private(multiplier,row,col) firstprivate(norm) num_threads(5)
+    #pragma omp parallel shared(A,B) private(multiplier,row,col) firstprivate(norm) num_threads(35)
     #pragma omp for schedule(static)
     for (row = norm + 1; row < N; row++)
-    {
-      multiplier = A[row][norm] / A[norm][norm];
+    { 
+      multiplier = A[row][norm] / A[norm][norm]; 
       for (col = norm; col < N; col++)
       {
         A[row][col] -= A[norm][col] * multiplier;
       }
       B[row] -= B[norm] * multiplier;
+      // parallelize(&row,&norm,&multiplier);
     }
-
   }
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
