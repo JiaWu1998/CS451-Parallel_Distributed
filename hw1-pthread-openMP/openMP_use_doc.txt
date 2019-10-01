@@ -24,5 +24,14 @@ number of threads.
 # of threads=60 (Performance: ~730ms)
 
 Zone in
-# of threads=35 (Performance: ~480ms)
-# of threads=45 (Performance: ~480ms)
+# of threads=35 (Performance: ~540ms)
+# of threads=45 (Performance: ~430ms)
+# of threads=48 (Performance: ~420ms)
+# of threads=49 (Performance: ~740ms)
+
+Magic number is 48 threads.
+
+-Final Performance: ~420ms 
+
+-I think the current version is efficient 
+because it speed up of 7700/420 = 18.33. 

@@ -224,7 +224,7 @@ void gauss()
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++)
   {
-    #pragma omp parallel shared(A,B) private(multiplier,row,col) firstprivate(norm) num_threads(35)
+    #pragma omp parallel shared(A,B) private(multiplier,row,col) firstprivate(norm) num_threads(46)
     #pragma omp for schedule(static)
     for (row = norm + 1; row < N; row++)
     { 
