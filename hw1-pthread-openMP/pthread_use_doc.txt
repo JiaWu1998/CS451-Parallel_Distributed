@@ -25,7 +25,7 @@ Zone in
 # of threads=14 (Performance: ~1117ms)
 # of threads=16 (Performance: ~1104ms)
 
-Magic number is 14 threads.
+Magic number is 16 threads.
 
 -Final Performance: ~1104ms
 
