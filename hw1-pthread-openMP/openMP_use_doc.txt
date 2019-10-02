@@ -34,6 +34,6 @@ Magic number is 48 threads.
 -Final Performance: ~420ms 
 
 -I think the current version is efficient 
-because it speed up of 7700/420 = 18.33 and 
+because it has a speed up of 7700/420 = 18.33 and 
 it has the number of threads that has the 
 fastest run time. 
