@@ -240,7 +240,7 @@ void gauss()
 {
   int norm, row, col, under_norm, nthread, num_of_threads;
   float step;
-  num_of_threads = 4;
+  num_of_threads = 16;
   struct arg_struct *arg = malloc(sizeof(struct arg_struct)*num_of_threads);
   pthread_t threads[num_of_threads];
 

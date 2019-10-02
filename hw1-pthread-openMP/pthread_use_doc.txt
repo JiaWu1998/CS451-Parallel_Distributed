@@ -11,9 +11,25 @@ gcc -o gauss_pthread gauss_pthread.c -lpthread -lm
 version 1: I tried to parallelize everything within 
 the norm for loop.(Performance: ~1700-1800ms)
 
-version 2: I tried to parallelize the norm loop and also 
-the col loop. However, the performance went down. 
-(Performance: ~2400ms)
+version 2: I tried different number of threads. 
+# of threads=4 (Performance: ~2250ms)
+# of threads=10 (Performance: ~1240ms)
+# of threads=20 (Performance: ~1150ms)
+# of threads=30 (Performance: ~1570ms)
+# of threads=40 (Performance: ~2170ms)
 
-version 3: I went back to version 1. I just played with the
-number of threads.
+Zone in
+# of threads=15 (Performance: ~1115ms)
+# of threads=25 (Performance: ~1381ms)
+# of threads=13 (Performance: ~1135ms)
+# of threads=14 (Performance: ~1117ms)
+# of threads=16 (Performance: ~1104ms)
+
+Magic number is 14 threads.
+
+-Final Performance: ~1104ms
+
+-I think the current version is efficient 
+because it speed up of 7800/1104 = 7.07 and 
+it has the number of threads that has the 
+fastest run time. 
