@@ -37,3 +37,5 @@ Magic number is 48 threads.
 because it has a speed up of 7700/420 = 18.33 and 
 it has the number of threads that has the 
 fastest run time. 
+
+!!!!!!need to test n=1000 and n=2000 to see if it scalable
