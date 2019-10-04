@@ -31,11 +31,17 @@ Zone in
 
 Magic number is 48 threads.
 
+Scability Test:
+I am testing with n=1000 to see if my solution is scalable.
+# of threads=48 (Performance: ~70ms)
+
 -Final Performance: ~420ms 
+*7800ms for running serially with n=2000
+*972ms for running serially with n=1000
 
 -I think the current version is efficient 
-because it has a speed up of 7700/420 = 18.33 and 
-it has the number of threads that has the 
-fastest run time. 
-
-!!!!!!need to test n=1000 and n=2000 to see if it scalable
+because it has a speed up of 7800/420 = 18.57 
+which makes it 18.6 times faster than the serial program.
+My program is also scalable since the relatively
+speed up is proportional to the size of the problem set. 
+Note that the speed up for n=1000 is 972/70 = 13.88.
