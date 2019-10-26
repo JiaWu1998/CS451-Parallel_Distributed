@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 int main(int argc, char *argv[]){
-    int done = 0, n, myid, numprocs, i;
+    int done = 0, n, myid, numprocs, i, computing = 0;
     double PI25DT = 3.141592653589793238462643;
     double mypi, pi, h, sum, x;
 
@@ -11,9 +11,10 @@ int main(int argc, char *argv[]){
     MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
     while (!done){
-		if (myid == 0) {
+		if (myid == 0 && computing == 0) {
 			printf("Enter the number of intervals: (0 quits) ");
 			scanf("%d",&n);
+			computing = 1;
 		}
 		MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		if (n == 0) break;
@@ -25,13 +26,17 @@ int main(int argc, char *argv[]){
 			sum += 4.0 / (1.0 + x*x);
 		}
 		mypi = h * sum;
-    
-		MPI_Reduce(&mypi, &pi, 1, MPI_DOUBLE, MPI_SUM, 0,
-			MPI_COMM_WORLD);
-    
-		if (myid == 0) {
+
+		//reduce result in the highest rank processor
+		MPI_Reduce(&mypi, &pi, 1, MPI_DOUBLE, MPI_SUM, numprocs-1,MPI_COMM_WORLD);
+
+		//print result in the highest rank processor
+		if (myid == numprocs-1) {
 			printf("pi is approximately %.16f, Error is %.16f\n",pi, fabs(pi - PI25DT));
-			printf("  number_proc:%i",number_proc);
+			MPI_Send(&computing, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+		} 
+		if (myid == 0){
+			MPI_Recv(&computing, 1, MPI_INT, numprocs-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 	}
 		MPI_Finalize();
