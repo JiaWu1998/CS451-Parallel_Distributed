@@ -148,6 +148,8 @@ int main(int argc, char **argv){
   MPI_Comm_size(MPI_COMM_WORLD,&numproc);
   MPI_Comm_rank(MPI_COMM_WORLD,&procRank);
 
+  int local_N = atoi(argv[1]);
+
   if (procRank == 0){
     /* Process program parameters */
     parameters(argc, argv);
@@ -161,54 +163,64 @@ int main(int argc, char **argv){
   }
   
   /* Gaussian Elimination */
-    int norm, row, col, local_index; 
+  int norm, row, col, local_index;
+  for (norm = 0; norm < local_N - 1; ++norm){
+    int num_rows = (int) (ceil((float) (local_N - (norm + 1)) / (float) numproc)) + 1;
+    float multiplier;
+    float local_A[num_rows][local_N];
+    float local_B[num_rows];
 
-    for (norm = 0; norm < N - 1; ++norm){
-      float local_size = ceil((float) (N - (norm + 1)) / (float) N) + 1;
-      float multiplier;
-      int row, col, local_index; 
-      float local_A[(int) local_size][N];
-      float local_B[(int) local_size];
-
-      if (procRank == 0){
-        for (col=0; col<N; ++col){
-          local_A[0][col] = A[norm][col];
-        }
-        local_B[0] = B[norm];
-
-        // broadcast the norm to all local A
-        MPI_Bcast(&local_A[0], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-        local_index = 1;
-        // now scatter all other under rows to local A
-        for (row = norm + 1; row < N; row += numproc){
-          MPI_Scatter(&A[row], N, MPI_FLOAT, &local_A[local_index], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-          MPI_Scatter(&B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-          local_index++;
-        }
+    if (procRank == 0){
+      for (col=0; col<local_N; ++col){
+        local_A[0][col] = A[norm][col];
       }
-      
-      for (row = 1; row < local_size; ++row){
-        multiplier = local_A[row][norm] / local_A[0][norm];
-        for (col = norm; col < N; col++){
-          local_A[row][col] -= A[0][col] * multiplier;
-        }
-        local_B[row] -= B[0] * multiplier;
-      }
+      local_B[0] = B[norm];
 
-      // Need to gather
+      // broadcast the norm to all local A
+      MPI_Bcast(local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      // MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      MPI_Barrier(MPI_COMM_WORLD);
+      // local_index = 1;
+      // now scatter all other under rows to local A
+      // for (row = norm + 1; row < N; row += numproc){
+      //   MPI_Scatter(&A[row], N, MPI_FLOAT, &local_A[local_index], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      //   MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      //   local_index++;
+      // }
     }
 
+    // for (row = 1; row < num_rows; ++row){
+    //   multiplier = local_A[row][norm] / local_A[0][norm];
+    //   for (col = norm; col < N; col++){
+    //     local_A[row][col] -= A[0][col] * multiplier;
+    //   }
+    //   local_B[row] -= B[0] * multiplier;
+    // }
 
-  if (procRank == 0){
-    back_substitution();
+    // Need to gather
+    
+    if(procRank == 1){
+      printf("local A from proc %i----------------------", procRank);
+      for (row=0; row< num_rows; ++row){
+        for (col=0; col< local_N; ++col){
+          printf("%f\t",local_A[row][col]);
+        }
+        printf("\n");
+      }
+      printf("----------------\n");
+    }
 
-    /* Display output */
-    print_X();
+    norm = local_N;    
+    // MPI_Barrier(MPI_COMM_WORLD);
   }
+  
+
+  // if (procRank == 0){
+  //   back_substitution();
+
+  //   /* Display output */
+  //   print_X();
+  // }
 
   MPI_Finalize();
   return 0;
