@@ -78,9 +78,9 @@ void initialize_inputs()
   int row, col;
 
   printf("\nInitializing...\n");
-  for (col = 0; col < N; col++)
+  for (col = 0; col < N; ++col)
   {
-    for (row = 0; row < N; row++)
+    for (row = 0; row < N; ++row)
     {
       A[row][col] = (float)rand() / 32768.0;
     }
@@ -97,15 +97,15 @@ void print_inputs()
   if (N < 10)
   {
     printf("\nA =\n\t");
-    for (row = 0; row < N; row++)
+    for (row = 0; row < N; ++row)
     {
-      for (col = 0; col < N; col++)
+      for (col = 0; col < N; ++col)
       {
         printf("%5.2f%s", A[row][col], (col < N - 1) ? ", " : ";\n\t");
       }
     }
     printf("\nB = [");
-    for (col = 0; col < N; col++)
+    for (col = 0; col < N; ++col)
     {
       printf("%5.2f%s", B[col], (col < N - 1) ? "; " : "]\n");
     }
@@ -119,7 +119,7 @@ void print_X()
   if (N < 100)
   {
     printf("\nX = [");
-    for (row = 0; row < N; row++)
+    for (row = 0; row < N; ++row)
     {
       printf("%5.2f%s", X[row], (row < N - 1) ? "; " : "]\n");
     }
@@ -127,7 +127,7 @@ void print_X()
 }
 
 int main(int argc, char **argv){
-  int numproc, procRank, gauss_done;
+  int numproc, procRank;
 
   /* MPI initalization */
   MPI_Init(&argc,&argv);
@@ -135,6 +135,8 @@ int main(int argc, char **argv){
   MPI_Comm_rank(MPI_COMM_WORLD,&procRank);
 
   if (procRank == 0){
+    counter = 0;
+
     /* Process program parameters */
     parameters(argc, argv);
 
@@ -143,44 +145,70 @@ int main(int argc, char **argv){
 
     /* Print input matrices */
     print_inputs();
+
   }
   
   /* Gaussian Elimination */
-  // gauss();
+    int norm, row, col, local_index; 
+    float multiplier, local_size;
+    int** local_A;
+    int* local_B;
 
-  // if (procRank == 0 && gauss_done){
-  //   /* Display output */
-  //   print_X();
-  // }
+    
+    for (norm = 0; norm < N - 1; ++norm){
+      local_size = ceil((float) (N - (norm + 1)) / (float) N) + 1;
+      int local_A [local_size][N];
+      int local_B [local_size];
+
+      if (procRank == 0){
+        local_A[0] = A[norm];
+        local_B[0] = B[norm];
+
+        // broadcast the norm to all local A
+        MPI_Bcast(local_A[0], N, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(local_B[0], 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        local_index = 1;
+        // now scatter all other under rows to local A
+        for (row = norm + 1; row < N; row += numproc){
+          MPI_Scatter(A[row], N, MPI_INT, local_A[local_index], N, MPI_INT, 0, MPI_COMM_WORLD);
+          MPI_Scatter(B[row], 1, MPI_INT, local_B[local_index], 1, MPI_INT, 0, MPI_COMM_WORLD);
+          ++local_index;
+        }
+      }
+      
+      for (row = 1; row < local_size; ++row){
+        multiplier = local_A[row][norm] / local_A[0][norm];
+        for (col = norm; col < N; col++){
+          local_A[row][col] -= A[0][col] * multiplier;
+        }
+        local_B[row] -= B[0] * multiplier;
+      }
+
+      // Need to gather
+      
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+
+  if (procRank == 0){
+    back_substitution();
+
+    /* Display output */
+    print_X();
+  }
 
   MPI_Finalize();
   return 0;
 }
 
-
-void gauss(){
-  int norm, row, col; /* Normalization row, and zeroing
-			* element row and col */
-  float multiplier;
-
-  /* Gaussian elimination */
-  for (norm = 0; norm < N - 1; norm++)
-  {
-    for (row = norm + 1; row < N; row++)
-    {
-      multiplier = A[row][norm] / A[norm][norm];
-      for (col = norm; col < N; col++)
-      {
-        A[row][col] -= A[norm][col] * multiplier;
-      }
-      B[row] -= B[norm] * multiplier;
-    }
-  }
+void back_substitution(){
+  int norm, row, col;
 
   /* Back substitution */
-  for (row = N - 1; row >= 0; row--){
+  for (row = N - 1; row >= 0; --row){
     X[row] = B[row];
-    for (col = N - 1; col > row; col--)
+    for (col = N - 1; col > row; --col)
     {
       X[row] -= A[row][col] * X[col];
     }
