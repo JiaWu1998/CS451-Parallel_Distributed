@@ -153,11 +153,13 @@ int main(int argc, char **argv){
       float local_size = ceil((float) (N - (norm + 1)) / (float) N) + 1;
       float multiplier;
       int row, col, local_index; 
-      volatile float local_A[(int) local_size][N];
-      volatile float local_B[(int) local_size];
+      float local_A[(int) local_size][N];
+      float local_B[(int) local_size];
 
       if (procRank == 0){
-        local_A[0] = A[norm];
+        for (col=0; col<N; ++col){
+          local_A[0][col] = A[norm][col];
+        }
         local_B[0] = B[norm];
 
         // broadcast the norm to all local A
