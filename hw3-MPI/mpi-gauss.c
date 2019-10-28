@@ -126,6 +126,20 @@ void print_X()
   }
 }
 
+void back_substitution(){
+  int norm, row, col;
+
+  /* Back substitution */
+  for (row = N - 1; row >= 0; --row){
+    X[row] = B[row];
+    for (col = N - 1; col > row; --col)
+    {
+      X[row] -= A[row][col] * X[col];
+    }
+    X[row] /= A[row][row];
+  }
+}
+
 int main(int argc, char **argv){
   int numproc, procRank;
 
@@ -163,15 +177,15 @@ int main(int argc, char **argv){
         local_B[0] = B[norm];
 
         // broadcast the norm to all local A
-        MPI_Bcast(local_A[0], N, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(local_B[0], 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&local_A[0], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
         local_index = 1;
         // now scatter all other under rows to local A
         for (row = norm + 1; row < N; row += numproc){
-          MPI_Scatter(A[row], N, MPI_INT, local_A[local_index], N, MPI_INT, 0, MPI_COMM_WORLD);
-          MPI_Scatter(B[row], 1, MPI_INT, local_B[local_index], 1, MPI_INT, 0, MPI_COMM_WORLD);
-          ++local_index;
+          MPI_Scatter(&A[row], N, MPI_FLOAT, &local_A[local_index], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+          MPI_Scatter(&B[row],1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+          local_index++;
         }
       }
       
@@ -198,18 +212,4 @@ int main(int argc, char **argv){
 
   MPI_Finalize();
   return 0;
-}
-
-void back_substitution(){
-  int norm, row, col;
-
-  /* Back substitution */
-  for (row = N - 1; row >= 0; --row){
-    X[row] = B[row];
-    for (col = N - 1; col > row; --col)
-    {
-      X[row] -= A[row][col] * X[col];
-    }
-    X[row] /= A[row][row];
-  }
 }
