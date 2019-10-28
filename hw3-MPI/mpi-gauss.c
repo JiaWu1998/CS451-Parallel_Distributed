@@ -135,8 +135,6 @@ int main(int argc, char **argv){
   MPI_Comm_rank(MPI_COMM_WORLD,&procRank);
 
   if (procRank == 0){
-    counter = 0;
-
     /* Process program parameters */
     parameters(argc, argv);
 
@@ -150,15 +148,13 @@ int main(int argc, char **argv){
   
   /* Gaussian Elimination */
     int norm, row, col, local_index; 
-    float multiplier, local_size;
-    int** local_A;
-    int* local_B;
 
-    
     for (norm = 0; norm < N - 1; ++norm){
-      local_size = ceil((float) (N - (norm + 1)) / (float) N) + 1;
-      int local_A [local_size][N];
-      int local_B [local_size];
+      float local_size = ceil((float) (N - (norm + 1)) / (float) N) + 1;
+      float multiplier;
+      int row, col, local_index; 
+      volatile float local_A[(int) local_size][N];
+      volatile float local_B[(int) local_size];
 
       if (procRank == 0){
         local_A[0] = A[norm];
@@ -186,7 +182,7 @@ int main(int argc, char **argv){
       }
 
       // Need to gather
-      
+
       MPI_Barrier(MPI_COMM_WORLD);
     }
 
