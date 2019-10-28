@@ -183,8 +183,8 @@ int main(int argc, char **argv){
         local_index = 1;
         // now scatter all other under rows to local A
         for (row = norm + 1; row < N; row += numproc){
-          // MPI_Scatter(&A[row], N, MPI_FLOAT, &local_A[local_index], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-          // MPI_Scatter(&B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+          MPI_Scatter(&A[row], N, MPI_FLOAT, &local_A[local_index], N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+          MPI_Scatter(&B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
           local_index++;
         }
       }
