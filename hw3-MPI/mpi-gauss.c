@@ -164,7 +164,7 @@ int main(int argc, char **argv){
   }
   MPI_Barrier(MPI_COMM_WORLD);
   /* Gaussian Elimination */
-  int norm, row, col, local_index;
+  int norm, row, col;
   for (norm = 0; norm < local_N - 1; ++norm){
     int num_rows = (int) (ceil((float) (local_N - (norm + 1)) / (float) numproc)) + 1;
     float multiplier;
@@ -192,16 +192,12 @@ int main(int argc, char **argv){
       MPI_Bcast(&local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      // printf("this if----%i",A[0][0]);
-      MPI_Scatter(&local_whole_linear_A[0], local_N, MPI_FLOAT, &local_A[1], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-      // local_index = 1;
-      // // now scatter all other under rows to local A
-      // for (row = norm + 1; row < local_N; row += numproc){
+      // now scatter all other under rows to local A
+      for (row = 1; row < local_N; row += numproc){
+        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[row], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       //   MPI_Scatter(&A[row], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      //   local_index++;
-      // }
+      }
 
 
 
