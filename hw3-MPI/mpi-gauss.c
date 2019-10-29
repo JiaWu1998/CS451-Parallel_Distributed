@@ -167,6 +167,7 @@ int main(int argc, char **argv){
   int norm, row, col;
   for (norm = 0; norm < local_N - 1; ++norm){
     int num_rows = (int) (ceil((float) (local_N - (norm + 1)) / (float) numproc)) + 1;
+    int local_index = 1;
     float multiplier;
     float local_A[num_rows][local_N];
     float local_B[num_rows];
@@ -194,9 +195,9 @@ int main(int argc, char **argv){
 
       // now scatter all other under rows to local A
       for (row = 1; row < local_N; row += numproc){
-        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[row], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      //   MPI_Scatter(&A[row], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        local_index++; 
       }
 
 
@@ -212,7 +213,7 @@ int main(int argc, char **argv){
 
     // Need to gather
 
-    if(procRank == 2){
+    if(procRank == 1){
       printf("local A from proc %i----------------------\n", procRank);
       for (row=0; row< num_rows; ++row){
         for (col=0; col< local_N; ++col){
