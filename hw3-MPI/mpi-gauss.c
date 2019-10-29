@@ -9,6 +9,7 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
 
 /* Program Parameters */
 #define MAXN 3000 /* Max value of N */
@@ -169,24 +170,38 @@ int main(int argc, char **argv){
     float multiplier;
     float local_A[num_rows][local_N];
     float local_B[num_rows];
+    float local_whole_linear_A[local_N*local_N];
 
-    if (procRank == 0){
+    if (procRank == 0){   
+      //get a copy of A local to processor 0
+      for (row=0; row<local_N; ++row){
+        for (col=0; col<local_N; ++col){
+          local_whole_linear_A[row * local_N + col] = A[row][col];
+        }
+      }
+
+      //get a copy of the norm and put it into the local_A to Bcast it to other local_A
       for (col=0; col<local_N; ++col){
         local_A[0][col] = A[norm][col];
       }
+
+      //get a copy of the norm and put it into the local_B to Bcast it to other local_B
       local_B[0] = B[norm];
     }
       // broadcast the norm to all local A
       MPI_Bcast(&local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      local_index = 1;
-      // now scatter all other under rows to local A
-      for (row = norm + 1; row < N; row += numproc){
-        // MPI_Scatter(&A[row], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        local_index++;
-      }
+      // printf("this if----%i",A[0][0]);
+      MPI_Scatter(&local_whole_linear_A[0], local_N, MPI_FLOAT, &local_A[1], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+      // local_index = 1;
+      // // now scatter all other under rows to local A
+      // for (row = norm + 1; row < local_N; row += numproc){
+      //   MPI_Scatter(&A[row], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      //   local_index++;
+      // }
 
 
 
@@ -200,13 +215,18 @@ int main(int argc, char **argv){
     // }
 
     // Need to gather
-    
-    if(procRank == 1){
+
+    if(procRank == 2){
       printf("local A from proc %i----------------------\n", procRank);
       for (row=0; row< num_rows; ++row){
         for (col=0; col< local_N; ++col){
           printf("%f\t",local_A[row][col]);
         }
+        printf("\n");
+      }
+      printf("Local B----------------\n");
+      for (row=0; row< num_rows; ++row){
+          printf("%f\t",local_B[row]);
         printf("\n");
       }
       printf("----------------\n");
