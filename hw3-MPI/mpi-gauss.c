@@ -166,11 +166,11 @@ int main(int argc, char **argv){
   /* Gaussian Elimination */
   int norm, row, col;
   for (norm = 0; norm < local_N - 1; ++norm){
-    int num_rows = (int) (ceil((float) (local_N - (norm + 1)) / (float) numproc)) + 1;
+    int local_num_rows = (int) (ceil((float) (local_N - (norm + 1)) / (float) numproc)) + 1;
     int local_index = 1;
     float multiplier;
-    float local_A[num_rows][local_N];
-    float local_B[num_rows];
+    float local_A[local_num_rows][local_N];
+    float local_B[local_num_rows];
     float local_whole_linear_A[local_N*local_N];
 
     if (procRank == 0){   
@@ -193,17 +193,17 @@ int main(int argc, char **argv){
       MPI_Bcast(&local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      // now scatter all other under rows to local A
-      for (row = 1; row < local_N; row += numproc){
-        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        local_index++; 
-      }
+      // // now scatter all other under rows to local A
+      // for (row = 1; row < local_N; row += numproc){
+      //   MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      // //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      //   local_index++; 
+      // }
 
 
 
 
-    // for (row = 1; row < num_rows; ++row){
+    // for (row = 1; row < local_num_rows; ++row){
     //   multiplier = local_A[row][norm] / local_A[0][norm];
     //   for (col = norm; col < N; col++){
     //     local_A[row][col] -= A[0][col] * multiplier;
@@ -215,14 +215,14 @@ int main(int argc, char **argv){
 
     if(procRank == 1){
       printf("local A from proc %i----------------------\n", procRank);
-      for (row=0; row< num_rows; ++row){
+      for (row=0; row< local_num_rows; ++row){
         for (col=0; col< local_N; ++col){
           printf("%f\t",local_A[row][col]);
         }
         printf("\n");
       }
       printf("Local B----------------\n");
-      for (row=0; row< num_rows; ++row){
+      for (row=0; row< local_num_rows; ++row){
           printf("%f\t",local_B[row]);
         printf("\n");
       }
