@@ -193,12 +193,12 @@ int main(int argc, char **argv){
       MPI_Bcast(&local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      // // now scatter all other under rows to local A
-      // for (row = 1; row < local_N; row += numproc){
-      //   MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      // //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      //   local_index++; 
-      // }
+      // now scatter all other under rows to local A
+      for (row = 1; row < local_N; row += numproc){
+        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        local_index++; 
+      }
 
 
 
@@ -213,6 +213,22 @@ int main(int argc, char **argv){
 
     // Need to gather
 
+    if(procRank == 0){
+      printf("local A from proc %i----------------------\n", procRank);
+      for (row=0; row< local_num_rows; ++row){
+        for (col=0; col< local_N; ++col){
+          printf("%f\t",local_A[row][col]);
+        }
+        printf("\n");
+      }
+      printf("Local B----------------\n");
+      for (row=0; row< local_num_rows; ++row){
+          printf("%f\t",local_B[row]);
+        printf("\n");
+      }
+      printf("----------------\n");
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
     if(procRank == 1){
       printf("local A from proc %i----------------------\n", procRank);
       for (row=0; row< local_num_rows; ++row){
@@ -228,6 +244,40 @@ int main(int argc, char **argv){
       }
       printf("----------------\n");
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(procRank == 2){
+      printf("local A from proc %i----------------------\n", procRank);
+      for (row=0; row< local_num_rows; ++row){
+        for (col=0; col< local_N; ++col){
+          printf("%f\t",local_A[row][col]);
+        }
+        printf("\n");
+      }
+      printf("Local B----------------\n");
+      for (row=0; row< local_num_rows; ++row){
+          printf("%f\t",local_B[row]);
+        printf("\n");
+      }
+      printf("----------------\n");
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(procRank == 3){
+      printf("local A from proc %i----------------------\n", procRank);
+      for (row=0; row< local_num_rows; ++row){
+        for (col=0; col< local_N; ++col){
+          printf("%f\t",local_A[row][col]);
+        }
+        printf("\n");
+      }
+      printf("Local B----------------\n");
+      for (row=0; row< local_num_rows; ++row){
+          printf("%f\t",local_B[row]);
+        printf("\n");
+      }
+      printf("----------------\n");
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
 
     norm = local_N;    
     // MPI_Barrier(MPI_COMM_WORLD);
