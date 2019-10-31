@@ -196,20 +196,17 @@ int main(int argc, char **argv){
       // now scatter all other under rows to local A
       for (row = 1; row < local_N; row += numproc){
         MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      //   // MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
         local_index++; 
       }
 
-
-
-
-    // for (row = 1; row < local_num_rows; ++row){
-    //   multiplier = local_A[row][norm] / local_A[0][norm];
-    //   for (col = norm; col < N; col++){
-    //     local_A[row][col] -= A[0][col] * multiplier;
-    //   }
-    //   local_B[row] -= B[0] * multiplier;
-    // }
+    for (row = 1; row < local_num_rows; ++row){
+      multiplier = local_A[row][norm] / local_A[0][norm];
+      for (col = norm; col < local_N; ++col){
+        local_A[row][col] -= local_A[0][col] * multiplier;
+      }
+      local_B[row] -= local_B[0] * multiplier;
+    }
 
     // Need to gather
 
