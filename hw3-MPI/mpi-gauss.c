@@ -167,7 +167,7 @@ int main(int argc, char **argv){
   int norm, row, col;
   for (norm = 0; norm < local_N - 1; ++norm){
     int local_num_rows = (int) (ceil((float) (local_N - norm) / (float) numproc)) + 1;
-    int local_index = 1;
+    int local_index;
     float multiplier;
     float local_A[local_num_rows][local_N];
     float local_B[local_num_rows];
@@ -194,12 +194,14 @@ int main(int argc, char **argv){
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
       // now scatter all other under rows to local A
+      local_index = 1;
       for (row = 1; row < local_N; row += numproc){
         MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
         MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
         local_index++; 
       }
 
+    // zeroing
     for (row = 1; row < local_num_rows; ++row){
       multiplier = local_A[row][norm] / local_A[0][norm];
       for (col = norm; col < local_N; ++col){
@@ -208,7 +210,16 @@ int main(int argc, char **argv){
       local_B[row] -= local_B[0] * multiplier;
     }
 
+    // every processor needs to wait until all processors are complete with calculating
+    MPI_Barrier(MPI_COMM_WORLD); 
+
     // Need to gather
+    local_index = 1;
+    for (row = 1; row < local_N; row += numproc){
+      MPI_Gather();
+      local_index++;
+    }
+
 
     if(procRank == 0){
       printf("local A from proc %i----------------------\n", procRank);
