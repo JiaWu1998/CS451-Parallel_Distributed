@@ -166,7 +166,7 @@ int main(int argc, char **argv){
   /* Gaussian Elimination */
   int norm, row, col;
   for (norm = 0; norm < local_N - 1; ++norm){
-    int local_num_rows = (int) (ceil((float) (local_N - (norm + 1)) / (float) numproc)) + 1;
+    int local_num_rows = (int) (ceil((float) (local_N - norm) / (float) numproc)) + 1;
     int local_index = 1;
     float multiplier;
     float local_A[local_num_rows][local_N];
