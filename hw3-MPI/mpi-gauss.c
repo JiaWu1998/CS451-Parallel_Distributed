@@ -162,6 +162,7 @@ int main(int argc, char **argv){
     print_inputs();
 
   }
+
   MPI_Barrier(MPI_COMM_WORLD);
   /* Gaussian Elimination */
   int norm, row, col;
@@ -216,75 +217,28 @@ int main(int argc, char **argv){
     // Need to gather
     local_index = 1;
     for (row = 1; row < local_N; row += numproc){
-      MPI_Gather();
+      MPI_Gather(&local_A[local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
       local_index++;
     }
 
+    // need to convert linear A back to 2d A 
 
     if(procRank == 0){
-      printf("local A from proc %i----------------------\n", procRank);
-      for (row=0; row< local_num_rows; ++row){
+      printf("A from proc %i----------------------\n", procRank);
+      for (row=0; row< local_N; ++row){
         for (col=0; col< local_N; ++col){
-          printf("%f\t",local_A[row][col]);
+          printf("%f\t",local_whole_linear_A[row * local_N + col]);
         }
         printf("\n");
       }
-      printf("Local B----------------\n");
-      for (row=0; row< local_num_rows; ++row){
+      printf("B----------------\n");
+      for (row=0; row< local_N; ++row){
           printf("%f\t",local_B[row]);
         printf("\n");
       }
       printf("----------------\n");
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-    if(procRank == 1){
-      printf("local A from proc %i----------------------\n", procRank);
-      for (row=0; row< local_num_rows; ++row){
-        for (col=0; col< local_N; ++col){
-          printf("%f\t",local_A[row][col]);
-        }
-        printf("\n");
-      }
-      printf("Local B----------------\n");
-      for (row=0; row< local_num_rows; ++row){
-          printf("%f\t",local_B[row]);
-        printf("\n");
-      }
-      printf("----------------\n");
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    if(procRank == 2){
-      printf("local A from proc %i----------------------\n", procRank);
-      for (row=0; row< local_num_rows; ++row){
-        for (col=0; col< local_N; ++col){
-          printf("%f\t",local_A[row][col]);
-        }
-        printf("\n");
-      }
-      printf("Local B----------------\n");
-      for (row=0; row< local_num_rows; ++row){
-          printf("%f\t",local_B[row]);
-        printf("\n");
-      }
-      printf("----------------\n");
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    if(procRank == 3){
-      printf("local A from proc %i----------------------\n", procRank);
-      for (row=0; row< local_num_rows; ++row){
-        for (col=0; col< local_N; ++col){
-          printf("%f\t",local_A[row][col]);
-        }
-        printf("\n");
-      }
-      printf("Local B----------------\n");
-      for (row=0; row< local_num_rows; ++row){
-          printf("%f\t",local_B[row]);
-        printf("\n");
-      }
-      printf("----------------\n");
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
 
 
     norm = local_N;    
