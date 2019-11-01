@@ -170,7 +170,7 @@ int main(int argc, char **argv){
     int local_num_rows = (int) (ceil((float) (local_N - norm) / (float) numproc)) + 1;
     int local_index;
     float multiplier;
-    float local_A[local_num_rows][local_N];
+    float local_A[local_num_rows*local_N];
     float local_B[local_num_rows];
     float local_whole_linear_A[local_N*local_N];
 
@@ -184,7 +184,7 @@ int main(int argc, char **argv){
 
       //get a copy of the norm and put it into the local_A to Bcast it to other local_A
       for (col=0; col<local_N; ++col){
-        local_A[0][col] = A[norm][col];
+        local_A[col] = A[norm][col];
       }
 
       //get a copy of the norm and put it into the local_B to Bcast it to other local_B
@@ -197,18 +197,19 @@ int main(int argc, char **argv){
       // now scatter all other under rows to local A
       local_index = 1;
       for (row = 1; row < local_N; row += numproc){
-        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        MPI_Scatter((void *) &B[row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_N*local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Scatter((void *) &B[norm + row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
         local_index++; 
       }
 
     // zeroing
     for (row = 1; row < local_num_rows; ++row){
-      multiplier = local_A[row][norm] / local_A[0][norm];
+      multiplier = local_A[row * local_N + norm] / local_A[norm];
       for (col = norm; col < local_N; ++col){
-        // local_A[row][col] -= local_A[0][col] * multiplier;
+        local_A[row * local_N + col] -= local_A[col] * multiplier;
       }
       // local_B[row] -= local_B[0] * multiplier;
+      local_B[row] = 0;
     }
 
     // every processor needs to wait until all processors are complete with calculating
@@ -217,24 +218,25 @@ int main(int argc, char **argv){
     // Need to gather
     local_index = 1;
     for (row = 1; row < local_N; row += numproc){
-      MPI_Gather(&local_A[local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Gather(&local_A[local_N*local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm + row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
       local_index++;
     }
+    
 
 
     if(procRank == 0){
-      printf("A from proc %i----------------------\n", procRank);
+      // printf("A from proc %i----------------------\n", procRank);
 
       // need to convert linear A back to 2d A 
       for (row=0; row< local_N; ++row){
         for (col=0; col< local_N; ++col){
           A[row][col] = local_whole_linear_A[row * local_N + col];
-          printf("%f\t",local_whole_linear_A[row * local_N + col]);
+          // printf("%f\t",local_whole_linear_A[row * local_N + col]);
         }
-        printf("\n");
+        // printf("\n");
       }
-      printf("B----------------\n");
+      printf("B from proc %i----------------\n",procRank);
       for (row=0; row< local_N; ++row){
           printf("%f\t",B[row]);
         printf("\n");
@@ -244,17 +246,17 @@ int main(int argc, char **argv){
     }
 
 
-    norm = local_N;    
+    // norm = local_N;    
     MPI_Barrier(MPI_COMM_WORLD);
   }
   
   MPI_Barrier(MPI_COMM_WORLD);
-  if (procRank == 0){
-    back_substitution();
+  // if (procRank == 0){
+  //   back_substitution();
 
-    /* Display output */
-    print_X();
-  }
+  //   /* Display output */
+  //   print_X();
+  // }
 
   MPI_Finalize();
   return 0;
