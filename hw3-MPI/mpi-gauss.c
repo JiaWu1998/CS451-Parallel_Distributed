@@ -206,9 +206,9 @@ int main(int argc, char **argv){
     for (row = 1; row < local_num_rows; ++row){
       multiplier = local_A[row][norm] / local_A[0][norm];
       for (col = norm; col < local_N; ++col){
-        local_A[row][col] -= local_A[0][col] * multiplier;
+        // local_A[row][col] -= local_A[0][col] * multiplier;
       }
-      local_B[row] -= local_B[0] * multiplier;
+      // local_B[row] -= local_B[0] * multiplier;
     }
 
     // every processor needs to wait until all processors are complete with calculating
@@ -222,36 +222,39 @@ int main(int argc, char **argv){
       local_index++;
     }
 
-    // need to convert linear A back to 2d A 
 
     if(procRank == 0){
       printf("A from proc %i----------------------\n", procRank);
+
+      // need to convert linear A back to 2d A 
       for (row=0; row< local_N; ++row){
         for (col=0; col< local_N; ++col){
+          A[row][col] = local_whole_linear_A[row * local_N + col];
           printf("%f\t",local_whole_linear_A[row * local_N + col]);
         }
         printf("\n");
       }
       printf("B----------------\n");
       for (row=0; row< local_N; ++row){
-          printf("%f\t",local_B[row]);
+          printf("%f\t",B[row]);
         printf("\n");
       }
       printf("----------------\n");
+
     }
 
 
     norm = local_N;    
-    // MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   }
   
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (procRank == 0){
+    back_substitution();
 
-  // if (procRank == 0){
-  //   back_substitution();
-
-  //   /* Display output */
-  //   print_X();
-  // }
+    /* Display output */
+    print_X();
+  }
 
   MPI_Finalize();
   return 0;
