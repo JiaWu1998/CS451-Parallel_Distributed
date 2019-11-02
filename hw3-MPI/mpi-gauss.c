@@ -173,7 +173,7 @@ int main(int argc, char **argv){
     float local_A[local_num_rows*local_N];
 
     //IMPORTANT PROBLEM: NANI????? local B size works with any size expect for local_num_rows
-    float local_B[1];
+    float local_B[1000];
     float local_whole_linear_A[local_N*local_N];
 
     if (procRank == 0){   
