@@ -171,7 +171,7 @@ int main(int argc, char **argv){
     int local_index;
     float multiplier;
     float local_A[local_num_rows*local_N];
-    float local_B[local_num_rows];
+    float local_B[100];
     float local_whole_linear_A[local_N*local_N];
 
     if (procRank == 0){   
@@ -190,9 +190,23 @@ int main(int argc, char **argv){
       //get a copy of the norm and put it into the local_B to Bcast it to other local_B
       local_B[0] = B[norm];
     }
+
+
+
+
+
+
+
+
       // broadcast the norm to all local A
       MPI_Bcast(&local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+
+
+
+
+
 
       // now scatter all other under rows to local A
       local_index = 1;
@@ -201,6 +215,10 @@ int main(int argc, char **argv){
         MPI_Scatter((void *) &B[norm + row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
         local_index++; 
       }
+    
+
+
+
 
     // zeroing
     for (row = 1; row < local_num_rows; ++row){
@@ -208,8 +226,8 @@ int main(int argc, char **argv){
       for (col = norm; col < local_N; ++col){
         local_A[row * local_N + col] -= local_A[col] * multiplier;
       }
-      // local_B[row] -= local_B[0] * multiplier;
-      local_B[row] = 0;
+      local_B[row] -= local_B[0] * multiplier;
+      // local_B[row] = 0;
     }
 
     // every processor needs to wait until all processors are complete with calculating
@@ -219,10 +237,11 @@ int main(int argc, char **argv){
     local_index = 1;
     for (row = 1; row < local_N; row += numproc){
       MPI_Gather(&local_A[local_N*local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm + row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm +row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
       local_index++;
     }
-    
+    MPI_Barrier(MPI_COMM_WORLD); 
+
 
 
     if(procRank == 0){
@@ -236,13 +255,13 @@ int main(int argc, char **argv){
         }
         // printf("\n");
       }
+    
       printf("B from proc %i----------------\n",procRank);
+
       for (row=0; row< local_N; ++row){
           printf("%f\t",B[row]);
         printf("\n");
       }
-      printf("----------------\n");
-
     }
 
 
@@ -250,7 +269,6 @@ int main(int argc, char **argv){
     MPI_Barrier(MPI_COMM_WORLD);
   }
   
-  MPI_Barrier(MPI_COMM_WORLD);
   // if (procRank == 0){
   //   back_substitution();
 
