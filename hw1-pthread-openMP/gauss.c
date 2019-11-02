@@ -222,14 +222,14 @@ void gauss()
    */
 
   /* Back substitution */
-  // for (row = N - 1; row >= 0; row--)
-  // {
-  //   X[row] = B[row];
-  //   for (col = N - 1; col > row; col--)
-  //   {
-  //     X[row] -= A[row][col] * X[col];
-  //   }
-  //   X[row] /= A[row][row];
-  // }
+  for (row = N - 1; row >= 0; row--)
+  {
+    X[row] = B[row];
+    for (col = N - 1; col > row; col--)
+    {
+      X[row] -= A[row][col] * X[col];
+    }
+    X[row] /= A[row][row];
+  }
   print_inputs();
 }

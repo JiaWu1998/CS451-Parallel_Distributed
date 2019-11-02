@@ -171,7 +171,9 @@ int main(int argc, char **argv){
     int local_index;
     float multiplier;
     float local_A[local_num_rows*local_N];
-    float local_B[100];
+
+    //IMPORTANT PROBLEM: NANI????? local B size works with any size expect for local_num_rows
+    float local_B[1];
     float local_whole_linear_A[local_N*local_N];
 
     if (procRank == 0){   
@@ -256,12 +258,12 @@ int main(int argc, char **argv){
         // printf("\n");
       }
     
-      printf("B from proc %i----------------\n",procRank);
+      // printf("B from proc %i----------------\n",procRank);
 
-      for (row=0; row< local_N; ++row){
-          printf("%f\t",B[row]);
-        printf("\n");
-      }
+      // for (row=0; row< local_N; ++row){
+      //   printf("%f\t",B[row]);
+      //   printf("\n");
+      // }
     }
 
 
@@ -269,12 +271,12 @@ int main(int argc, char **argv){
     MPI_Barrier(MPI_COMM_WORLD);
   }
   
-  // if (procRank == 0){
-  //   back_substitution();
+  if (procRank == 0){
+    back_substitution();
 
-  //   /* Display output */
-  //   print_X();
-  // }
+    /* Display output */
+    print_X();
+  }
 
   MPI_Finalize();
   return 0;
