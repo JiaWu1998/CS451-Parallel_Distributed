@@ -156,7 +156,7 @@ int main(int argc, char **argv){
     float local_A[2*local_N];
     float local_B[2];
   int send_index = 0;
-  int under_row_count = 0;
+  int under_row_count;
 
   if (procRank == 0){
     /* Process program parameters */
@@ -174,8 +174,7 @@ int main(int argc, char **argv){
   if (procRank == 0) {
       for (norm = 0; norm < local_N - 1; norm++){
         under_row_count = local_N - (norm + 1);
-          for (row = norm + 1; row < local_N; row++){
-              
+          for (row = norm + 1; row < local_N; row+= numproc){
             
               //get a copy of the norm and put it into the local_A to Bcast it to other local_A
               for (col=0; col<local_N; ++col){
@@ -198,13 +197,18 @@ int main(int argc, char **argv){
               }
               MPI_Send((void*) &A[row][0],local_N, MPI_FLOAT, send_index,send_index,MPI_COMM_WORLD);
               send_index ++;
-              MPI_Recv((void*) &A[row][0],local_N, MPI_FLOAT, send_index,send_index,MPI_COMM_WORLD);
+              MPI_Recv((void*) &A[row][0],local_N, MPI_FLOAT, send_index,send_index,MPI_COMM_WORLD,NULL);
           }
       }
+
+    back_substitution();
+
+    /* Display output */
+    print_X();
   }
 
   if (procRank != 0){
-    MPI_Recv(&local_A[local_N],MPI_FLOAT, 0, procRank, MPI_COMM_WORLD);
+    MPI_Recv(&local_A[local_N],local_N,MPI_FLOAT, 0, procRank, MPI_COMM_WORLD,NULL);
     // zeroing
     multiplier = local_A[local_N + norm] / local_A[norm];
     for (col = norm; col < local_N; ++col){
@@ -212,7 +216,7 @@ int main(int argc, char **argv){
     }
     // local_B[1] -= local_B[0] * multiplier;
 
-    MPI_Send(&local_A[local_N],MPI_FLOAT, 0, procRank, MPI_COMM_WORLD);
+    MPI_Send(&local_A[local_N],local_N,MPI_FLOAT, 0, procRank, MPI_COMM_WORLD);
   }
 
 
@@ -236,14 +240,6 @@ int main(int argc, char **argv){
             //   // }
             // }
   
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (procRank == 0){
-    back_substitution();
-
-    /* Display output */
-    print_X();
-  }
 
   MPI_Finalize();
   return 0;

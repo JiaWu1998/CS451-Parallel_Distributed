@@ -1,19 +1,19 @@
-# .PHONY: all mpi-auto mpi-scp mpi-compile
+.PHONY: all mpi-auto mpi-scp mpi-compile
 
-# all: mpi-auto 
+all: mpi-auto 
 
-# mpi-auto: mpi-scp
-# 	@cd ~ && mpirun -np 4 -hostfile hosts ./mpi-gauss 1600 2
+mpi-auto: mpi-scp
+	@cd ~ && mpirun -np 4 -hostfile hosts ./mpi-gauss 7 2
 
-# mpi-scp: mpi-compile mpi-gauss
-# 	@scp mpi-gauss mpi-instance-1:.
-# 	@scp mpi-gauss mpi-instance-2:.
-# 	@scp mpi-gauss mpi-instance-3:.
-# 	@mv mpi-gauss ~
+mpi-scp: mpi-compile mpi-gauss
+	@scp mpi-gauss mpi-instance-1:.
+	@scp mpi-gauss mpi-instance-2:.
+	@scp mpi-gauss mpi-instance-3:.
+	@mv mpi-gauss ~
 
-# mpi-compile: mpi-gauss.c
-# 	@mpicc mpi-gauss.c -o mpi-gauss -lm
-# 	@chmod 777 mpi-gauss
+mpi-compile: mpi-gauss.c
+	@mpicc mpi-gauss.c -o mpi-gauss -lm
+	@chmod 777 mpi-gauss
 
 
 
@@ -37,19 +37,19 @@
 
 # ------------------------------------------------------------------
 
-.PHONY: all mpi-auto mpi-scp mpi-compile
+# .PHONY: all mpi-auto mpi-scp mpi-compile
 
-all: mpi-auto 
+# all: mpi-auto 
 
-mpi-auto: mpi-scp
-	@cd ~ && mpirun -np 4 -hostfile hosts ./noscatter 1600 2
+# mpi-auto: mpi-scp
+# 	@cd ~ && mpirun -np 4 -hostfile hosts ./noscatter 200 2
 
-mpi-scp: mpi-compile noscatter
-	@scp noscatter mpi-instance-1:.
-	@scp noscatter mpi-instance-2:.
-	@scp noscatter mpi-instance-3:.
-	@mv noscatter ~
+# mpi-scp: mpi-compile noscatter
+# 	@scp noscatter mpi-instance-1:.
+# 	@scp noscatter mpi-instance-2:.
+# 	@scp noscatter mpi-instance-3:.
+# 	@mv noscatter ~
 
-mpi-compile: noscatter.c
-	@mpicc noscatter.c -o noscatter -lm
-	@chmod 777 noscatter
+# mpi-compile: noscatter.c
+# 	@mpicc noscatter.c -o noscatter -lm
+# 	@chmod 777 noscatter
