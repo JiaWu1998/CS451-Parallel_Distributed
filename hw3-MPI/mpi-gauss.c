@@ -142,12 +142,16 @@ void back_substitution(){
 }
 
 int main(int argc, char **argv){
+  double t1, t2; 
   int numproc, procRank;
 
   /* MPI initalization */
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numproc);
   MPI_Comm_rank(MPI_COMM_WORLD,&procRank);
+
+  //time measuring
+  t1 = MPI_Wtime();
 
   int local_N = atoi(argv[1]);
 
@@ -163,7 +167,7 @@ int main(int argc, char **argv){
 
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  // MPI_Barrier(MPI_COMM_WORLD);
   /* Gaussian Elimination */
   int norm, row, col;
   for (norm = 0; norm < local_N - 1; norm++){
@@ -174,7 +178,7 @@ int main(int argc, char **argv){
 
     // //IMPORTANT PROBLEM: NANI????? local B size works with any size expect for local_num_rows only with N=6 or under
     float local_B[3000];
-    float local_whole_linear_A[300000];
+    float local_whole_linear_A[2000000];
 
     // printf("%i\n",sizeof(local_B)/sizeof(float));
     // printf("%i\n",local_num_rows);
@@ -236,7 +240,7 @@ int main(int argc, char **argv){
     }
 
     // every processor needs to wait until all processors are complete with calculating
-    MPI_Barrier(MPI_COMM_WORLD); 
+    // MPI_Barrier(MPI_COMM_WORLD); 
 
     // Need to gather
     local_index = 1;
@@ -245,20 +249,20 @@ int main(int argc, char **argv){
       MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm +row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
       local_index++;
     }
-    MPI_Barrier(MPI_COMM_WORLD); 
+    // MPI_Barrier(MPI_COMM_WORLD); 
 
 
 
     if(procRank == 0){
-      printf("A from proc %i----------------------\n", procRank);
+      // printf("A from proc %i----------------------\n", procRank);
 
       // need to convert linear A back to 2d A 
       for (row=0; row< local_N; ++row){
         for (col=0; col< local_N; ++col){
           A[row][col] = local_whole_linear_A[row * local_N + col];
-          printf("%f\t",local_whole_linear_A[row * local_N + col]);
+          // printf("%f\t",local_whole_linear_A[row * local_N + col]);
         }
-        printf("\n");
+        // printf("\n");
       }
     
       // printf("B from proc %i----------------\n",procRank);
@@ -269,7 +273,7 @@ int main(int argc, char **argv){
       // }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
   }
   
   if (procRank == 0){
@@ -278,6 +282,11 @@ int main(int argc, char **argv){
     /* Display output */
     print_X();
   }
+
+  t2 = MPI_Wtime();
+
+  printf("Elapsed time = %1.2f\n", t2-t1);
+  fflush(stdout);
 
   MPI_Finalize();
   return 0;
