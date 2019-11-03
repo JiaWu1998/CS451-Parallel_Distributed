@@ -173,8 +173,11 @@ int main(int argc, char **argv){
     float local_A[local_num_rows*local_N];
 
     //IMPORTANT PROBLEM: NANI????? local B size works with any size expect for local_num_rows only with N=6 or under
-    float local_B[1000];
+    float local_B[10];
     float local_whole_linear_A[local_N*local_N];
+
+    // printf("%i\n",sizeof(local_B)/sizeof(float));
+    printf("%i\n",local_num_rows);
 
     if (procRank == 0){   
       //get a copy of A local to processor 0
@@ -212,7 +215,7 @@ int main(int argc, char **argv){
 
       // now scatter all other under rows to local A
       local_index = 1;
-      for (row = 1; row < local_N; row += numproc){
+      for (row = 1; row < local_N-1; row += numproc){
         MPI_Scatter(&local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, &local_A[local_N*local_index], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
         MPI_Scatter((void *) &B[norm + row], 1, MPI_FLOAT, &local_B[local_index], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
         local_index++; 
@@ -237,7 +240,7 @@ int main(int argc, char **argv){
 
     // Need to gather
     local_index = 1;
-    for (row = 1; row < local_N; row += numproc){
+    for (row = 1; row < local_N-1; row += numproc){
       MPI_Gather(&local_A[local_N*local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm +row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
       local_index++;
