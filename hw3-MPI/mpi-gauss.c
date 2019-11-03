@@ -285,7 +285,7 @@ int main(int argc, char **argv){
 
   t2 = MPI_Wtime();
 
-  printf("Elapsed time = %1.2f\n", t2-t1);
+  // printf("Elapsed time = %1.2f\n", t2-t1);
   fflush(stdout);
 
   MPI_Finalize();
