@@ -12,7 +12,7 @@ int main(int argc, char** argv){
     //     '5','6','7','8'
     // };
 
-    char B[16];
+    char B[16] = {'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'};
 
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD,&world_size);
@@ -58,8 +58,8 @@ int main(int argc, char** argv){
     // MPI_Scatter(A,4,MPI_CHAR,Buf,4,MPI_CHAR,0,MPI_COMM_WORLD);
     MPI_Gather(&Buf[0], 1, MPI_CHAR, &B[0], 1, MPI_CHAR,0,MPI_COMM_WORLD);
     MPI_Gather(&Buf[1], 1, MPI_CHAR, &B[4], 1, MPI_CHAR,0,MPI_COMM_WORLD);
-    MPI_Gather(&Buf[2], 1, MPI_CHAR, &B[8], 1, MPI_CHAR,0,MPI_COMM_WORLD);
-    MPI_Gather(&Buf[3], 1, MPI_CHAR, &B[12], 1, MPI_CHAR,0,MPI_COMM_WORLD);
+    // MPI_Gather(&Buf[2], 1, MPI_CHAR, &B[8], 1, MPI_CHAR,0,MPI_COMM_WORLD);
+    // MPI_Gather(&Buf[3], 1, MPI_CHAR, &B[12], 1, MPI_CHAR,0,MPI_COMM_WORLD);
     // for (i=0; i<4; ++i){
     //     printf("%c\t",Buf[i]);
     // }
