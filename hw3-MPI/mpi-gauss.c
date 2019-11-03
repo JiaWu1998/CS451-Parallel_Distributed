@@ -173,7 +173,7 @@ int main(int argc, char **argv){
     float local_A[local_num_rows*local_N];
 
     //IMPORTANT PROBLEM: NANI????? local B size works with any size expect for local_num_rows only with N=6 or under
-    float local_B[10];
+    float local_B[4];
     float local_whole_linear_A[local_N*local_N];
 
     // printf("%i\n",sizeof(local_B)/sizeof(float));
