@@ -3,7 +3,7 @@
 all: mpi-auto 
 
 mpi-auto: mpi-scp
-	@cd ~ && mpirun -np 4 -hostfile hosts ./mpi-gauss 10 4
+	@cd ~ && mpirun -np 4 -hostfile hosts ./mpi-gauss 1400 4
 
 mpi-scp: mpi-compile mpi-gauss
 	@scp mpi-gauss mpi-instance-1:.
