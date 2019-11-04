@@ -17,16 +17,9 @@ int N;            /* Matrix size */
 
 /* Matrices and vectors */
 volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
-/* A * X = B, solve for X */
 
 /* junk */
 #define randm() 4 | 2 [uid] & 3
-
-/* Prototype */
-void gauss(); /* The function you will provide.
-		* It is this routine that is timed.
-		* It is called only on the parent.
-		*/
 
 /* returns a seed for srand based on the time */
 unsigned int time_seed()
@@ -177,7 +170,6 @@ int main(int argc, char **argv){
     float local_B[3000];
     float local_whole_linear_A[2000000];
 
-
     if (procRank == 0){   
       //get a copy of A local to processor 0
       for (row=0; row<local_N; ++row){
@@ -195,20 +187,9 @@ int main(int argc, char **argv){
       local_B[0] = B[norm];
     }
 
-
-
-
-
-
-
-
       // broadcast the norm to all local A
       MPI_Bcast(&local_A[0], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&local_B[0], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-
-
-
 
       // now scatter all other under rows to local A
       local_index = 1;
@@ -218,10 +199,6 @@ int main(int argc, char **argv){
         local_index++; 
       }
     
-
-
-
-
     // zeroing
     for (row = 1; row < local_num_rows; ++row){
       multiplier = local_A[row * local_N + norm] / local_A[norm];
@@ -234,30 +211,22 @@ int main(int argc, char **argv){
     // Need to gather
     local_index = 1;
     for (row = 1; row < local_N; row += numproc){
-      // MPI_Gather(&local_A[local_N*local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      // MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm +row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Gather(&local_A[local_N*local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Gather(&local_B[local_index],1, MPI_FLOAT, (void *) &B[norm +row], 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
       local_index++;
     }
 
     if(procRank == 0){
-      // printf("A from proc %i----------------------\n", procRank);
-
       // need to convert linear A back to 2d A 
       for (row=0; row< local_N; ++row){
         for (col=0; col< local_N; ++col){
           A[row][col] = local_whole_linear_A[row * local_N + col];
-          // printf("%f\t",local_whole_linear_A[row * local_N + col]);
         }
-        // printf("\n");
       }
-    
-      // printf("B from proc %i----------------\n",procRank);
-
-      // for (row=0; row< local_N; ++row){
-      //   printf("%f\t",B[row]);
-      //   printf("\n");
-      // }
     }
+
+    //wait before starting next norm
+    MPI_Barrier(MPI_COMM_WORLD);
   }
   
   if (procRank == 0){

@@ -1,16 +1,25 @@
+/* This is a program that does gaussian elimation over distributed machines using MPI */
+
+#include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <math.h>
+#include <sys/types.h>
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
-#include <mpi.h>
+#include <string.h>
 
+/* Program Parameters */
+#define MAXN 3000 /* Max value of N */
+int N;            /* Matrix size */
 
-#define MAXN 3000
-int N;
+/* Matrices and vectors */
+volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
 
-void gaussian_mpi(int N);
-float A[MAXN][MAXN],B[MAXN],X[MAXN];
+/* junk */
+#define randm() 4 | 2 [uid] & 3
 
 /* returns a seed for srand based on the time */
 unsigned int time_seed()
@@ -125,18 +134,38 @@ void back_substitution(){
   }
 }
 
-int main(int argc,char *argv[])
-{
-    int proc,id;
-	double t1, t2; 
+void zeroing(int row, int col, int norm, int local_N, int numproc){
+    float multiplier;
 
-	MPI_Init(&argc,&argv);//Initiating MPI
-	MPI_Comm_rank(MPI_COMM_WORLD,&id);//Getting rank of current processor.
-	MPI_Comm_size(MPI_COMM_WORLD,&proc);//Getting number of processor in MPI_COMM_WORLD
+    if (numproc == -1){
+        // from other processors: only need to change one row
+        multiplier = A[row][norm] / A[norm][norm];
+        for (col = norm; col < local_N; col++){
+            A[row][col] -= A[norm][col] * multiplier;
+        }
+        B[row] -= B[norm] * multiplier;
+    }else{
+        // from processor 0: need to skip numproc and change all other rows
+        for (row=norm+1 ; row<local_N ; row += numproc){
+            multiplier = A[row][norm] / A[norm][norm];
+            for (col = norm; col < local_N; col++){
+                A[row][col] -= A[norm][col] * multiplier;
+            }
+            B[row] -= B[norm] * multiplier;
+        }
+    }
+}
+
+int main(int argc,char *argv[]){
+    double t1, t2; 
+    int numproc,procRank, local_N;
+
+	MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&numproc);
+	MPI_Comm_rank(MPI_COMM_WORLD,&procRank);
 
 
-	if(id==0)
-	{
+	if(procRank==0){
 		/* Process program parameters */
         parameters(argc, argv);
 
@@ -149,79 +178,80 @@ int main(int argc,char *argv[])
  							
 	}
 
-    N = atoi(argv[1]);//getting matrix dimension from command line argument
+    local_N = atoi(argv[1]);
 	
 	MPI_Request req;
 	MPI_Status stat;
-	int p,k,i,j;
-	float mp;	
+	int procid,norm,row,col;
 
-	MPI_Barrier(MPI_COMM_WORLD);// waiting for all processors	
+    //need to wait for processor 0 to complete initialization of A and read the user input
+	MPI_Barrier(MPI_COMM_WORLD);
 
-	for (k=0;k<N-1;k++)
- 	{	
-		//Broadcsting X's and Y's matrix from 0th rank processor to all other processors.
-		MPI_Bcast(&A[k][0],N, MPI_FLOAT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(&B[k],1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	for (norm=0;norm<local_N-1;norm++){	
+		// broadcast the norm to all local A
+		MPI_Bcast((void*) &A[norm][0],local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		MPI_Bcast((void*) &B[norm],1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 	
-		if(id==0)
-		{
-			for (p=1;p<proc;p++)
-			{
-		  		for (i=k+1+p;i<N;i+=proc)
-		  		{
-				/* Sending X and y matrix from oth to all other processors using non blocking send*/
-				   MPI_Isend(&A[i], N, MPI_FLOAT, p, 0, MPI_COMM_WORLD, &req);
+		if (procRank==0) {
+			for (procid=1;procid<numproc;procid++){
+		  		for (row=norm+1+procid;row<local_N;row+=numproc){
+				//non block send whole A, B matrix to other processors 
+				   MPI_Isend((void*) &A[row], local_N, MPI_FLOAT, procid, 0, MPI_COMM_WORLD, &req);
+                   //note to self: must do MPI_Wait to only wait for after the MPI send request is 
+                   //complete. Then it moves on quick.
 				   MPI_Wait(&req, &stat);
-				   MPI_Isend(&B[i], 1, MPI_FLOAT, p, 0, MPI_COMM_WORLD, &req);
+				   MPI_Isend((void*) &B[row], 1, MPI_FLOAT, procid, 0, MPI_COMM_WORLD, &req);
 				   MPI_Wait(&req, &stat);
 		  		}
 			}
-			// implementing gaussian elimination 
-			for (i=k+1 ; i<N ; i += proc)
-			{
-	  			mp = A[i][k] / A[k][k];
-	  			for (j = k; j < N; j++)
-	 			{
-	   				A[i][j] -= A[k][j] * mp;
-	 			}
-	   			B[i] -= B[k] * mp;
-			}
-			// Receiving all the values that are send by 0th processor.
-			for (p = 1; p < proc; p++)
-			{
-			  for (i = k + 1 + p; i < N; i += proc)
-			  {
-			    MPI_Recv(&A[i], N, MPI_FLOAT, p, 1, MPI_COMM_WORLD, &stat);
-			    MPI_Recv(&B[i], 1, MPI_FLOAT, p, 1, MPI_COMM_WORLD, &stat);
+
+			// zeroing for processor 0
+            zeroing(row, col, norm, local_N, numproc);
+			// for (row=norm+1 ; row<local_N ; row += numproc){
+	  		// 	multiplier = A[row][norm] / A[norm][norm];
+	  		// 	for (col = norm; col < local_N; col++){
+	   		// 		A[row][col] -= A[norm][col] * multiplier;
+	 		// 	}
+	   		// 	B[row] -= B[norm] * multiplier;
+			// }
+
+			// Receiving back changed matrix from all other processors
+			for (procid = 1; procid < numproc; procid++){
+			  for (row = norm + 1 + procid; row < local_N; row += numproc){
+			    MPI_Recv((void*) &A[row], local_N, MPI_FLOAT, procid, 1, MPI_COMM_WORLD, &stat);
+			    MPI_Recv((void*) &B[row], 1, MPI_FLOAT, procid, 1, MPI_COMM_WORLD, &stat);
 			  }
 			}
 		}
-		
-		
-		else
-		{
-			for (i = k + 1 + id; i < N; i += proc)
-			{
-				MPI_Recv(&A[i], N, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);		
-				MPI_Recv(&B[i], 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-				mp = A[i][k] / A[k][k];
-				for (j = k; j < N; j++)
-				{
-				    A[i][j] -= A[k][j] * mp;
-				}
-				B[i] -= B[k] * mp;
-				MPI_Isend(&A[i], N, MPI_FLOAT, 0, 1, MPI_COMM_WORLD, &req);						    
+
+
+		if (procRank != 0){
+			for (row = norm + 1 + procRank; row < local_N; row += numproc){
+                //get norm from processor 0
+				MPI_Recv((void*) &A[row], local_N, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);		
+				MPI_Recv((void*) &B[row], 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+
+                //zeroing for other processors (exclude 0)
+                zeroing(row, col, norm, local_N, -1);
+				// multiplier = A[row][norm] / A[norm][norm];
+				// for (col = norm; col < local_N; col++){
+				//     A[row][col] -= A[norm][col] * multiplier;
+				// }
+				// B[row] -= B[norm] * multiplier;
+
+                //send back the row to processor 0
+				MPI_Isend((void*) &A[row], local_N, MPI_FLOAT, 0, 1, MPI_COMM_WORLD, &req);						    
 				MPI_Wait(&req, &stat);		
-				MPI_Isend(&B[i], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &req);
+				MPI_Isend((void*) &B[row], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &req);
 				MPI_Wait(&req, &stat);
 			}
 		}
-		 MPI_Barrier(MPI_COMM_WORLD);//Waiting for all processors
+
+        //wait before starting next norm
+		 MPI_Barrier(MPI_COMM_WORLD);
 	}
 	
-	if(id==0)
-	{
+	if(procRank==0){
 		back_substitution();
 
         print_X();
