@@ -1,0 +1,59 @@
+-To Run this, type the below while on the directory of the mpi-gauss.c file: 
+
+gcc mpi-gauss.c -o mpi-gauss -lm 
+chmod 777 mpi-gauss
+mv mpi-gauss ~
+cd ~
+scp mpi-gauss mpi-instance-1:.
+scp mpi-gauss mpi-instance-2:.
+scp mpi-gauss mpi-instance-3:.
+mpirun -np 4 -hostfile hosts ./mpi-gauss <matrix size> <random seed>
+
+-Optimization:
+
+Version One: first_gauss.c
+I tried scattering all the rows multiple times to make local A and local B matrices
+and then gather all of them at the end after. This didn't work very well because
+the scatter and gather calls were blocking. This means I have to wait all processors
+to start scattering or gathering; this caused me a lot of run time and it was messy.
+I also have to wait for all the processors to finish calculating before i can gather.
+
+Version Two(final): mpi-gauss.c
+This time, I went with a simpler approach. Each processor would have a local A and 
+local B but they would only contain two rows, the norm and the row that the processor
+is in charge of processing. This means that I only need to broadcast the norm and then
+I can send one row to each processor to calculate and return. This was way faster since
+I don't need to wait for all the local rows to be calculated before gathering. This is 
+also where I found out about non-blocking MPI functions, MPI_isend in particalar. This
+allowed me to just send a row to another processor from processor 0 and move on to 
+other things quickly. While sending rows to other processors, processor 0 is also give
+a set of rows that it has to work on to evenly distribute the workload.
+
+-My Performance Test:
+mpirun -np 4 -hostfile hosts ./mpi-gauss 3000 2
+
+Performance(All will be run with four nodes):
+Serial Code:
+Matrix-size(3000) --> 26397.1 ms
+Matrix-size(2000) --> 7778.03 ms
+Matrix-size(1000) --> 980.021 ms
+Matrix-size(500) --> 124.2 ms
+
+MPI Code:
+Matrix-size(3000) --> 89201.89023 ms
+Matrix-size(2000) --> 26379.17614 ms
+Matrix-size(1000) --> 4240.67736 ms
+Matrix-size(500) --> 840.22093 ms
+
+Avg Speedup = ((26397.1/89201.89023) + (7778.03/26379.17614) + (980.021/4240.67736) + (124.2/840.22093))/4
+Avg Speedup = 0.2424
+
+The solution is scable but it doesn't seem too efficient to me because it has a 
+average speedup of 0.2424 and that's a sublinear speedup.
+
+Let's see the efficiency:
+Efficiency = speedup / processors
+Efficiency = 0.2424 / 4
+Efficiency = 0.0606
+
+The efficiency is not that close to 1 so it's not so efficient.
