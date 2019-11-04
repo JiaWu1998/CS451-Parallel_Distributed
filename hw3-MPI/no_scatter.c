@@ -10,7 +10,7 @@
 int N;
 
 void gaussian_mpi(int N);
-double A[MAXN][MAXN],B[MAXN],X[MAXN];
+float A[MAXN][MAXN],B[MAXN],X[MAXN];
 
 /* returns a seed for srand based on the time */
 unsigned int time_seed()
@@ -144,15 +144,15 @@ int main(int argc,char *argv[])
         initialize_inputs();
 
         // /* Print input matrices */
-        // print_inputs();
+        print_inputs();
         t1 = MPI_Wtime();
  							
 	}
 
     N = atoi(argv[1]);//getting matrix dimension from command line argument
 	
-	MPI_Request request;
-	MPI_Status status;
+	MPI_Request req;
+	MPI_Status stat;
 	int p,k,i,j;
 	float mp;	
 
@@ -161,8 +161,8 @@ int main(int argc,char *argv[])
 	for (k=0;k<N-1;k++)
  	{	
 		//Broadcsting X's and Y's matrix from 0th rank processor to all other processors.
-		MPI_Bcast(&A[k][0],N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		MPI_Bcast(&B[k],1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&A[k][0],N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&B[k],1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 	
 		if(id==0)
 		{
@@ -171,10 +171,10 @@ int main(int argc,char *argv[])
 		  		for (i=k+1+p;i<N;i+=proc)
 		  		{
 				/* Sending X and y matrix from oth to all other processors using non blocking send*/
-				   MPI_Isend(&A[i], N, MPI_DOUBLE, p, 0, MPI_COMM_WORLD, &request);
-				   MPI_Wait(&request, &status);
-				   MPI_Isend(&B[i], 1, MPI_DOUBLE, p, 0, MPI_COMM_WORLD, &request);
-				   MPI_Wait(&request, &status);
+				   MPI_Isend(&A[i], N, MPI_FLOAT, p, 0, MPI_COMM_WORLD, &req);
+				   MPI_Wait(&req, &stat);
+				   MPI_Isend(&B[i], 1, MPI_FLOAT, p, 0, MPI_COMM_WORLD, &req);
+				   MPI_Wait(&req, &stat);
 		  		}
 			}
 			// implementing gaussian elimination 
@@ -192,8 +192,8 @@ int main(int argc,char *argv[])
 			{
 			  for (i = k + 1 + p; i < N; i += proc)
 			  {
-			    MPI_Recv(&A[i], N, MPI_DOUBLE, p, 1, MPI_COMM_WORLD, &status);
-			    MPI_Recv(&B[i], 1, MPI_DOUBLE, p, 1, MPI_COMM_WORLD, &status);
+			    MPI_Recv(&A[i], N, MPI_FLOAT, p, 1, MPI_COMM_WORLD, &stat);
+			    MPI_Recv(&B[i], 1, MPI_FLOAT, p, 1, MPI_COMM_WORLD, &stat);
 			  }
 			}
 		}
@@ -203,18 +203,18 @@ int main(int argc,char *argv[])
 		{
 			for (i = k + 1 + id; i < N; i += proc)
 			{
-				MPI_Recv(&A[i], N, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);		
-				MPI_Recv(&B[i], 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
+				MPI_Recv(&A[i], N, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);		
+				MPI_Recv(&B[i], 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
 				mp = A[i][k] / A[k][k];
 				for (j = k; j < N; j++)
 				{
 				    A[i][j] -= A[k][j] * mp;
 				}
 				B[i] -= B[k] * mp;
-				MPI_Isend(&A[i], N, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);						    
-				MPI_Wait(&request, &status);		
-				MPI_Isend(&B[i], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
-				MPI_Wait(&request, &status);
+				MPI_Isend(&A[i], N, MPI_FLOAT, 0, 1, MPI_COMM_WORLD, &req);						    
+				MPI_Wait(&req, &stat);		
+				MPI_Isend(&B[i], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &req);
+				MPI_Wait(&req, &stat);
 			}
 		}
 		 MPI_Barrier(MPI_COMM_WORLD);//Waiting for all processors
@@ -223,6 +223,8 @@ int main(int argc,char *argv[])
 	if(id==0)
 	{
 		back_substitution();
+
+        print_X();
 		t2 = MPI_Wtime();
 
         printf("Elapsed time = %1.5f ms.\n", (t2-t1)*1000);
