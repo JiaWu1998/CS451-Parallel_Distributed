@@ -42,7 +42,7 @@
 all: mpi-auto 
 
 mpi-auto: mpi-scp
-	@cd ~ && mpirun -np 4 -hostfile hosts ./no_scatter 2 2
+	@cd ~ && mpirun -np 4 -hostfile hosts ./no_scatter 10 2
 
 mpi-scp: mpi-compile no_scatter
 	@scp no_scatter mpi-instance-1:.

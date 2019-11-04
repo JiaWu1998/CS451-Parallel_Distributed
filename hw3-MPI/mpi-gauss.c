@@ -136,17 +136,14 @@ void back_substitution(){
 
 int main(int argc, char **argv){
   double t1, t2; 
-  int numproc, procRank;
+  int numproc, procRank, local_N;
 
   /* MPI initalization */
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numproc);
   MPI_Comm_rank(MPI_COMM_WORLD,&procRank);
 
-  //time measuring
-  t1 = MPI_Wtime();
-
-  int local_N = atoi(argv[1]);
+  local_N = atoi(argv[1]);
 
   if (procRank == 0){
     /* Process program parameters */
@@ -157,6 +154,9 @@ int main(int argc, char **argv){
 
     /* Print input matrices */
     print_inputs();
+
+    //time measuring
+    t1 = MPI_Wtime();
 
   }
 
@@ -208,7 +208,7 @@ int main(int argc, char **argv){
       local_B[row] -= local_B[0] * multiplier;
     }
 
-    // Need to gather
+    // Need to gather all rows back to processor 0
     local_index = 1;
     for (row = 1; row < local_N; row += numproc){
       MPI_Gather(&local_A[local_N*local_index],local_N, MPI_FLOAT, &local_whole_linear_A[local_N * (norm +row)], local_N, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -234,12 +234,12 @@ int main(int argc, char **argv){
 
     /* Display output */
     print_X();
+
+    t2 = MPI_Wtime();
+
+    printf("Elapsed time = %1.5f\n", (t2-t1)*1000);
+    fflush(stdout);
   }
-
-  t2 = MPI_Wtime();
-
-  printf("Elapsed time = %1.5f\n", (t2-t1)*1000);
-  fflush(stdout);
 
   MPI_Finalize();
   return 0;
