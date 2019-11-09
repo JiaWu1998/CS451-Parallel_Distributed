@@ -1,5 +1,5 @@
 /* Matrix normalization.
- * Compile with "gcc matrixNorm.c"
+ * Compile with "gcc matrixNorm.c -lm"
  */
 
 #include <stdio.h>
