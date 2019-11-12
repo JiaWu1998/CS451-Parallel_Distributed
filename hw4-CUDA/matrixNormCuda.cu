@@ -10,6 +10,8 @@
 
 /* Program Parameters */
 #define N 6000  /* Matrix size */
+int blocks_per_grid = 64;
+int threads_per_block = 256; 
 
 /* Matrices */
 volatile float A[N][N], B[N][N];
@@ -35,7 +37,7 @@ void initialize_inputs() {
 
 /* Kernel function */
 
-__global__ void matrixNorm(float mu, float sigma, int N) {
+__global__ void matrixNorm(float* A_d, float* B_d, float mu, float sigma, int N) {
     for (row=0; row < N; row++) {
         if (sigma == 0.0)
             B_d[row*N + col] = 0.0;
@@ -64,31 +66,34 @@ int main(int argc, char **argv) {
     printf("\nStarting clock.\n\n");
     gettimeofday(&start, &tzdummy);
     
-    printf("Computing Serially.\n");
+    printf("Computing Parallely.\n");
     
     /*allocating GPU space*/
     cudaError_t err1 = cudaMalloc((void **) &A_d, N);
     cudaError_t err2 = cudaMalloc((void **) &B_d, N);
 
     /*transfer data from host to device*/
-    cudaMemcpy(A_d,A,N*N,cudaMemcpyHostToDevice);
+    cudaMemcpy(A_d,A,N*N*sizeof(float),cudaMemcpyHostToDevice);
 
     /* Kernal Matrix Normalization */
-    for (col=0; col < N; col++) {
-        mu = 0.0;
-        for (row=0; row < N; row++)
-            mu += A[row][col];
-        mu /= (float) N;
-        sigma = 0.0;
-        for (row=0; row < N; row++)
-            sigma += powf(A[row][col] - mu, 2.0);
-        sigma /= (float) N;
-        sigma = sqrt(sigma);
-        matrixNorm<<< >>>(mu,sigma, N);
-    }
+    matrixNorm<<<blocks_per_grid,threads_per_block>>>(A_d,B_d,mu,sigma,N);
+
+    //note to self: KERNAL CALLS ARE EXPENSIVE AF
+    // for (col=0; col < N; col++) {
+    //     mu = 0.0;
+    //     for (row=0; row < N; row++)
+    //         mu += A[row][col];
+    //     mu /= (float) N;
+    //     sigma = 0.0;
+    //     for (row=0; row < N; row++)
+    //         sigma += powf(A[row][col] - mu, 2.0);
+    //     sigma /= (float) N;
+    //     sigma = sqrt(sigma);
+    //     matrixNorm<<<blocks_per_grid,threads_per_block>>>(A_d,B_d,mu,sigma, N);
+    // }
 
     /*transfer data from device to host*/
-    cudaMemcpy(B_d,B,N*N,cudaMemcpyDeviceToHost);
+    cudaMemcpy(B_d,B,N*N*sizeof(float),cudaMemcpyDeviceToHost);
     
     /*deallocating GPU space*/
     cudaFree(A_d);
