@@ -41,23 +41,31 @@ __global__ void matrixNorm(float* A_d, float* B_d, int N) {
     __shared__ float mu, sigma;
     int col, row;
 
-    // for (col=0; col < N; col++) {
-    //         mu = 0.0;
-    //         for (row=0; row < N; row++)
-    //             mu += A[row][col];
-    //         mu /= (float) N;
-    //         sigma = 0.0;
-    //         for (row=0; row < N; row++)
-    //             sigma += powf(A[row][col] - mu, 2.0);
-    //         sigma /= (float) N;
-    //         sigma = sqrt(sigma);
-    //         for (row=0; row < N; row++) {
-    //             if (sigma == 0.0)
-    //                 B_d[row*N + col] = 0.0;
-    //             else
-    //                 B_d[row*N + col] = (A_d[row*N + col] - mu) / sigma;
-    //         }
-    //     }
+    for (col=0; col < N; col++) {
+            mu = 0.0;
+            for (row=0; row < N; row++)
+                mu += A_d[row*N + col];
+            mu /= (float) N;
+
+            //synchronization after calculating mu
+            __syncthreads();
+
+            sigma = 0.0;
+            for (row=0; row < N; row++)
+                sigma += powf(A_d[row*N + col] - mu, 2.0);
+            sigma /= (float) N;
+            sigma = sqrt(sigma);
+
+            //synchronization after calculating sigma
+            __syncthreads();
+
+            for (row=0; row < N; row++) {
+                if (sigma == 0.0)
+                    B_d[row*N + col] = 0.0;
+                else
+                    B_d[row*N + col] = (A_d[row*N + col] - mu) / sigma;
+            }
+        }
 }
 
 
