@@ -19,7 +19,7 @@ volatile float A[N][N], B[N][N];
 void initialize_inputs() {
     int row, col;
     
-    srand((unsigned)time(NULL));
+    // srand((unsigned)time(NULL));
     for (row = 0; row < N; row++) {
         for (col = 0; col < N; col++) {
             A[row][col] = (float)rand() / 32768.0;
@@ -28,6 +28,31 @@ void initialize_inputs() {
     }
     
 }
+
+/* Print input matrices */
+void print_inputs()
+{
+  int row, col;
+  int howmuchtoprint = 5;
+    printf("\nA =\n\t");
+    for (row = 0; row < howmuchtoprint; row++)
+    {
+      for (col = 0; col < howmuchtoprint; col++)
+      {
+        printf("%5.2f%s", A[row][col], (col < howmuchtoprint - 1) ? ", " : ";\n\t");
+      }
+    }
+    printf("\nB = [");
+    for (row = 0; row < howmuchtoprint; row ++)
+    {
+        for (col = 0; col < howmuchtoprint; col++)
+        {
+        printf("%5.2f%s", B[row][col], (col < howmuchtoprint - 1 ) ? "; " : "]\n");
+        }
+    }
+
+}
+
 
 
 /* Kernel function */
@@ -68,7 +93,7 @@ int main(int argc, char **argv) {
     
     /* Initialize A and B */
     initialize_inputs();
-    
+    print_inputs();
     
     /* Start Clock */
     printf("\n---------------------------------------------\n");
@@ -79,7 +104,9 @@ int main(int argc, char **argv) {
     
     /* Matrix Normalization */
     matrixNorm();
-    
+
+    printf("\n-------Output--------------------------------------------\n");
+    print_inputs();
     
     /* Stop Clock */
     gettimeofday(&stop, &tzdummy);

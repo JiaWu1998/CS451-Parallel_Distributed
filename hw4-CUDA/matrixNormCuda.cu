@@ -10,11 +10,11 @@
 
 /* Program Parameters */
 #define N 6000  /* Matrix size */
-int blocks_per_grid = 64;
+int blocks_per_grid = 32;
 int threads_per_block = 256; 
 
 /* Matrices */
-float A[N][N], B[N][N];
+float A[N*N], B[N*N];
 
 /* CUDA arrays */
 float *A_d, *B_d;
@@ -24,47 +24,75 @@ float *A_d, *B_d;
 void initialize_inputs() {
     int row, col;
     
-    srand((unsigned)time(NULL));
+    // srand((unsigned)time(NULL));
     for (row = 0; row < N; row++) {
         for (col = 0; col < N; col++) {
-            A[row][col] = (float)rand() / 32768.0;
-            B[row][col] = 0.0;
+            A[row*N + col] = (float)rand() / 32768.0;
+            B[row*N + col] = 0.0;
         }
     }
     
 }
 
+/* Print input matrices */
+void print_inputs()
+{
+  int row, col;
+  int howmuchtoprint = 5;
+    printf("\nA =\n\t");
+    for (row = 0; row < howmuchtoprint; row++)
+    {
+      for (col = 0; col < howmuchtoprint; col++)
+      {
+        printf("%5.2f%s", A[row*N + col], (col < howmuchtoprint - 1) ? ", " : ";\n\t");
+      }
+    }
+    printf("\nB = [");
+    for (row = 0; row < howmuchtoprint; row ++)
+    {
+        for (col = 0; col < howmuchtoprint; col++)
+        {
+        printf("%5.2f%s", B[row*N + col], (col < howmuchtoprint - 1 ) ? "; " : "]\n");
+        }
+    }
+
+}
 
 /* Kernel function */
 
-__global__ void matrixNorm(float* A_d, float* B_d, int N) {
+__global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ float mu, sigma;
     int row;
 
-    mu = 0.0;
-    for (row=0; row < N; row++){
-        mu += A_d[row*N + col];
-    }
-    mu /= (float) N;
+    if (idx < N_d) {
+        mu = 0.0;
+        for (row=0; row < N_d; row++){
+            mu += A_dd[idx*N_d + row];
+        }
+        mu /= (float) N_d;
 
-    //synchronization after calculating mu
-    __syncthreads();
+        //synchronization after calculating mu
+        __syncthreads();
 
-    sigma = 0.0;
-    for (row=0; row < N; row++)
-        sigma += powf(A_d[row*N + col] - mu, 2.0);
-    sigma /= (float) N;
-    sigma = sqrt(sigma);
+        sigma = 0.0;
+        for (row=0; row < N_d; row++){
+            sigma += powf(A_dd[idx*N_d + row] - mu, 2.0);
+        }
+        sigma /= (float) N_d;
+        sigma = sqrt(sigma);
 
-    //synchronization after calculating sigma
-    __syncthreads();
+        //synchronization after calculating sigma
+        __syncthreads();
 
-    for (row=0; row < N; row++) {
-        if (sigma == 0.0)
-            B_d[row*N + col] = 0.0;
-        else
-            B_d[row*N + col] = (A_d[row*N + col] - mu) / sigma;
+        for (row=0; row < N_d; row++) {
+            if (sigma == 0.0){
+                B_dd[idx*N_d + row] = 0.0;
+            }
+            else{
+                B_dd[idx*N_d + row] = (A_dd[idx*N_d + row] - mu) / sigma;
+            }
+        }
     }
 }
 
@@ -80,7 +108,7 @@ int main(int argc, char **argv) {
     
     /* Initialize A and B */
     initialize_inputs();
-    
+    print_inputs();
     
     /* Start Clock */
     printf("\n---------------------------------------------\n");
@@ -91,14 +119,15 @@ int main(int argc, char **argv) {
     printf("Computing Parallely.\n");
     
     /*allocating GPU space*/
-    cudaError_t err1 = cudaMalloc((void **) &A_d, N);
-    cudaError_t err2 = cudaMalloc((void **) &B_d, N);
+    cudaMalloc((void **) &A_d, N*N*sizeof(float));
+    cudaMalloc((void **) &B_d, N*N*sizeof(float));
 
     /*transfer data from host to device*/
     cudaMemcpy(A_d,A,N*N*sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(B_d,B,N*N*sizeof(float),cudaMemcpyHostToDevice);
 
     /* Kernal Matrix Normalization */
-    matrixNorm <<<blocks_per_grid,threads_per_block>>> (A_d,B_d,N);
+    matrixNorm<<<blocks_per_grid,threads_per_block>>>(A_d,B_d,N);
 
     //note to self: KERNAL CALLS ARE EXPENSIVE AF
     // for (col=0; col < N; col++) {
@@ -115,11 +144,15 @@ int main(int argc, char **argv) {
     // }
 
     /*transfer data from device to host*/
-    cudaMemcpy(B_d,B,N*N*sizeof(float),cudaMemcpyDeviceToHost);
+    cudaMemcpy(B,B_d,N*N*sizeof(float),cudaMemcpyDeviceToHost);
+    cudaMemcpy(A,A_d,N*N*sizeof(float),cudaMemcpyDeviceToHost);
     
     /*deallocating GPU space*/
     cudaFree(A_d);
     cudaFree(B_d);
+    
+    printf("\n-------Output--------------------------------------------\n");
+    print_inputs();
     
     /* Stop Clock */
     gettimeofday(&stop, &tzdummy);
@@ -133,3 +166,17 @@ int main(int argc, char **argv) {
     
     exit(0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
