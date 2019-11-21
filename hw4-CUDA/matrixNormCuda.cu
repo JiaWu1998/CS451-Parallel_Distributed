@@ -68,7 +68,7 @@ __global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
     if (idx < N_d) {
         mu = 0.0;
         for (row=0; row < N_d; row++){
-            mu += A_dd[idx*N_d + row];
+            mu += A_dd[row*N_d + idx];
         }
         mu /= (float) N_d;
 
@@ -77,7 +77,7 @@ __global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
 
         sigma = 0.0;
         for (row=0; row < N_d; row++){
-            sigma += powf(A_dd[idx*N_d + row] - mu, 2.0);
+            sigma += powf(A_dd[row*N_d + idx] - mu, 2.0);
         }
         sigma /= (float) N_d;
         sigma = sqrt(sigma);
@@ -87,10 +87,10 @@ __global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
 
         for (row=0; row < N_d; row++) {
             if (sigma == 0.0){
-                B_dd[idx*N_d + row] = 0.0;
+                B_dd[row*N_d + idx] = 0.0;
             }
             else{
-                B_dd[idx*N_d + row] = (A_dd[idx*N_d + row] - mu) / sigma;
+                B_dd[row*N_d + idx] = (A_dd[row*N_d + idx] - mu) / sigma;
             }
         }
     }
