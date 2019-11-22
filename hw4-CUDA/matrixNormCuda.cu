@@ -62,7 +62,8 @@ void print_inputs()
 
 __global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    __shared__ float mu, sigma;
+    // __shared__ float mu, sigma;
+    float mu, sigma;
     int row;
 
     if (idx < N_d) {
@@ -70,20 +71,20 @@ __global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
         for (row=0; row < N_d; row++){
             mu += A_dd[row*N_d + idx];
         }
-        mu /= (float) N_d;
+        mu /= N_d;
 
         //synchronization after calculating mu
-        __syncthreads();
+        // __syncthreads();
 
         sigma = 0.0;
         for (row=0; row < N_d; row++){
             sigma += powf(A_dd[row*N_d + idx] - mu, 2.0);
         }
-        sigma /= (float) N_d;
+        sigma /= N_d;
         sigma = sqrt(sigma);
 
         //synchronization after calculating sigma
-        __syncthreads();
+        // __syncthreads();
 
         for (row=0; row < N_d; row++) {
             if (sigma == 0.0){
@@ -145,7 +146,7 @@ int main(int argc, char **argv) {
 
     /*transfer data from device to host*/
     cudaMemcpy(B,B_d,N*N*sizeof(float),cudaMemcpyDeviceToHost);
-    cudaMemcpy(A,A_d,N*N*sizeof(float),cudaMemcpyDeviceToHost);
+    // cudaMemcpy(A,A_d,N*N*sizeof(float),cudaMemcpyDeviceToHost);
     
     /*deallocating GPU space*/
     cudaFree(A_d);
