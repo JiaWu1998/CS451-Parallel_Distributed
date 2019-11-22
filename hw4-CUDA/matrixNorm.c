@@ -33,7 +33,7 @@ void initialize_inputs() {
 void print_inputs()
 {
   int row, col;
-  int howmuchtoprint = 5;
+  int howmuchtoprint = 10;
     printf("\nA =\n\t");
     for (row = 0; row < howmuchtoprint; row++)
     {
