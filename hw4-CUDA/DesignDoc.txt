@@ -1,0 +1,7 @@
+-The number blocks per grid and the number of threads per block is 
+determined by the size of the matrix, N. At minimum, we need at least 
+sqrt(N) number of threads. Since the cuda will be tested with N = 2000,
+4000,6000, and 8000, the minimum number of threads that it will have is 
+8000. I chose to create 32 blocks per grid and 256 threads per block. This
+will give use 8192 threads. 
+-
