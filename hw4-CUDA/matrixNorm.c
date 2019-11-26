@@ -9,7 +9,7 @@
 #include <math.h>
 
 /* Program Parameters */
-#define N 6000  /* Matrix size */
+#define N 8000  /* Matrix size */
 
 /* Matrices */
 volatile float A[N][N], B[N][N];

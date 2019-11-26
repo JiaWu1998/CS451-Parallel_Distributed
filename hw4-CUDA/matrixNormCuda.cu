@@ -9,7 +9,7 @@
 #include <math.h>
 
 /* Program Parameters */
-#define N 6000  /* Matrix size */
+#define N 8000  /* Matrix size */
 int blocks_per_grid = 32;
 int threads_per_block = 256; 
 
