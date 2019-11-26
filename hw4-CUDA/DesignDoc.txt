@@ -1,7 +1,38 @@
--The number blocks per grid and the number of threads per block is 
+(line 13-14) The number blocks per grid and the number of threads per block is 
 determined by the size of the matrix, N. At minimum, we need at least 
 sqrt(N) number of threads. Since the cuda will be tested with N = 2000,
 4000,6000, and 8000, the minimum number of threads that it will have is 
 8000. I chose to create 32 blocks per grid and 256 threads per block. This
 will give use 8192 threads. 
--
+
+(line 17) Since Cuda can only work on 1-D arrays, my matrix A and B will be initialized 
+in 1-D matrix where the size is N by N.
+
+(line 24,38) I used previous homeworks for the matrix initialization function and print 
+input function. 
+
+(line 104-106, 159-166) I also used the previous homeworks to setup the time measurement to evaluate
+the runtime of the cuda program.
+
+Now, I can move on to programming the cuda proportion.  
+
+(line 123-124)First, I allocated memory in the device machine by using cudaMalloc.
+
+(line 127-128)Now that I have the allocations in the device machine, I can transfer the
+data(Matrix A and B) I needed to operate on to the device machine. 
+
+(line 131)Once I have transfer all the data I needed to the device machine, 
+I can call the host function that will run on the device.
+
+(line 148)After the function finishes running, the result will be stored in
+the B matrix in the device. I will have to transfer the B matrix back
+into the host machine.
+
+(line 152-153)Finally, I have to free the allocations in the device machine to prevent
+memory leaks.
+
+(line 159-160)Then, I just print the output to compare accuracy and the runtime for evaluation.
+-------------------------------------------------------------------------
+
+THIS PART IS FOR THE GLOBAL FUNCTION.
+
