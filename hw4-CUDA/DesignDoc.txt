@@ -36,3 +36,4 @@ memory leaks.
 
 THIS PART IS FOR THE GLOBAL FUNCTION.
 
+(line 64) First, I calculated the........continue this part
