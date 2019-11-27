@@ -36,6 +36,12 @@ memory leaks.
 
 THIS PART IS FOR THE GLOBAL FUNCTION.
 
-(line 64) First, I calculated the mean of the  
+(line 64) First, I calculated the id of each thread.
 
-()
+Note that each thread works on one column.
+(line 70-74) Next, I calculated the mean of each column. 
+
+(line 79-84) Then, I calculated the standard deviation of each column.
+
+(line 89-96) Now that I have the mean and standard deviation for each column, I can calculate
+the normalized values for each column and put it into the B matrix in the device machine.
