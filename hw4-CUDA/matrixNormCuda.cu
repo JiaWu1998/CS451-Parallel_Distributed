@@ -73,18 +73,12 @@ __global__ void matrixNorm(float* A_dd, float* B_dd, int N_d) {
         }
         mu /= N_d;
 
-        //synchronization after calculating mu
-        // __syncthreads();
-
         sigma = 0.0;
         for (row=0; row < N_d; row++){
             sigma += powf(A_dd[row*N_d + idx] - mu, 2.0);
         }
         sigma /= N_d;
         sigma = sqrt(sigma);
-
-        //synchronization after calculating sigma
-        // __syncthreads();
 
         for (row=0; row < N_d; row++) {
             if (sigma == 0.0){

@@ -1,6 +1,6 @@
 I am using a GeForce GTX 1050 TI.
 
-Serial Code
+Serial Code (CPU)
 
 (N=2000) t= 249.156 ms
 (N=4000) t= 1005.03 ms
@@ -9,7 +9,7 @@ Serial Code
 
 --------------------------------------------------
 
-Parallel Code (CUDA)
+Parallel Code (CUDA/GPU)
 
 (N=2000) t= 138.939 ms
 (N=4000) t= 181.803 ms
@@ -42,6 +42,12 @@ I think my code is not that scable because the efficiency
 changed a little as the problem size and number of threads
 increase.  
 
+To optimize my code, I have tried shared memory in the device 
+machine because I read a post that said that shared memory in the 
+device machine is faster than the global and the local memory in 
+the device machine. However, the output matrix was not consistent.
+
+I had to switch back to the regular way that I was doing it.
 
 
 
